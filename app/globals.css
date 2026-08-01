@@ -1,26 +1,1249 @@
 @import "tailwindcss";
 
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --acid-green: #baff00;
+  --page-black: #050605;
+  --glass-x: 50%;
+  --glass-y: 0%;
+  --glass-shift-x: 0px;
+  --glass-shift-y: 0px;
+  --glass-rotate-x: 0deg;
+  --glass-rotate-y: 0deg;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  scroll-behavior: smooth;
+  background: var(--page-black);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  width: 100%;
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+  background: var(--page-black);
+  color: #ffffff;
+}
+
+body,
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button {
+  cursor: pointer;
+}
+
+img,
+picture,
+svg,
+video,
+canvas {
+  display: block;
+  max-width: 100%;
+}
+
+section[id] {
+  scroll-margin-top: 120px;
+}
+
+::selection {
+  background: var(--acid-green);
+  color: #050505;
+}
+
+/* =========================================================
+   FIXED LIQUID GLASS NAVBAR
+   ========================================================= */
+
+.site-navbar {
+  pointer-events: none;
+  perspective: 1000px;
+}
+
+.liquid-navbar {
+  --glass-x: 50%;
+  --glass-y: 0%;
+  --glass-shift-x: 0px;
+  --glass-shift-y: 0px;
+  --glass-rotate-x: 0deg;
+  --glass-rotate-y: 0deg;
+
+  pointer-events: auto;
+  isolation: isolate;
+  overflow: hidden;
+  border: 1px solid rgb(255 255 255 / 16%);
+  border-radius: 999px;
+
+  background:
+    linear-gradient(
+      115deg,
+      rgb(255 255 255 / 12%) 0%,
+      rgb(255 255 255 / 4%) 28%,
+      rgb(255 255 255 / 1%) 52%,
+      rgb(186 255 0 / 3%) 76%,
+      rgb(255 255 255 / 9%) 100%
+    ),
+    rgb(8 9 8 / 34%);
+
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 35%),
+    inset 0 -1px 0 rgb(255 255 255 / 6%),
+    inset 14px 0 34px rgb(255 255 255 / 2%),
+    inset -12px 0 30px rgb(186 255 0 / 2%),
+    0 14px 45px rgb(0 0 0 / 28%),
+    0 2px 8px rgb(0 0 0 / 22%);
+
+  backdrop-filter:
+    blur(24px)
+    saturate(185%)
+    contrast(112%)
+    brightness(108%);
+
+  -webkit-backdrop-filter:
+    blur(24px)
+    saturate(185%)
+    contrast(112%)
+    brightness(108%);
+
+  transform:
+    perspective(1000px)
+    rotateX(var(--glass-rotate-x))
+    rotateY(var(--glass-rotate-y));
+
+  transform-style: preserve-3d;
+
+  transition:
+    background 400ms ease,
+    border-color 400ms ease,
+    box-shadow 400ms ease,
+    backdrop-filter 400ms ease,
+    transform 180ms ease-out;
+
+  will-change: transform;
+}
+
+/* Prismatic glass rim */
+
+.liquid-navbar::before {
+  position: absolute;
+  z-index: 8;
+  inset: 0;
+  padding: 1px;
+  border-radius: inherit;
+
+  background:
+    conic-gradient(
+      from 155deg at var(--glass-x) var(--glass-y),
+      rgb(255 255 255 / 8%) 0deg,
+      rgb(116 218 255 / 42%) 38deg,
+      rgb(178 126 255 / 36%) 78deg,
+      rgb(255 105 190 / 42%) 115deg,
+      rgb(255 255 255 / 64%) 158deg,
+      rgb(186 255 0 / 28%) 205deg,
+      rgb(93 212 255 / 34%) 255deg,
+      rgb(255 255 255 / 10%) 320deg,
+      rgb(255 255 255 / 8%) 360deg
+    );
+
+  content: "";
+  opacity: 0.75;
+  pointer-events: none;
+
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+
+  -webkit-mask-composite: xor;
+
+  mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+
+  mask-composite: exclude;
+}
+
+/* Thin polished upper edge */
+
+.liquid-navbar::after {
+  position: absolute;
+  z-index: 9;
+  top: 0;
+  left: 8%;
+  width: 55%;
+  height: 1px;
+  border-radius: 999px;
+
+  background:
+    linear-gradient(
+      90deg,
+      transparent,
+      rgb(255 255 255 / 78%) 28%,
+      rgb(205 240 255 / 52%) 55%,
+      transparent
+    );
+
+  box-shadow:
+    0 1px 8px rgb(255 255 255 / 18%);
+
+  content: "";
+  opacity: 0.78;
+  pointer-events: none;
+}
+
+/* Real blurred background layer */
+
+.liquid-navbar-base {
+  position: absolute;
+  z-index: -5;
+  inset: 0;
+  border-radius: inherit;
+
+  background:
+    radial-gradient(
+      circle at var(--glass-x) var(--glass-y),
+      rgb(255 255 255 / 15%) 0%,
+      rgb(255 255 255 / 4%) 16%,
+      transparent 40%
+    ),
+    linear-gradient(
+      100deg,
+      rgb(255 255 255 / 7%),
+      transparent 28%,
+      rgb(186 255 0 / 2%) 70%,
+      rgb(255 255 255 / 5%)
+    );
+
+  pointer-events: none;
+}
+
+/* Large internal lens/refraction */
+
+.liquid-navbar-refraction {
+  position: absolute;
+  z-index: -4;
+  inset: -55% -10%;
+  border-radius: 50%;
+
+  background:
+    radial-gradient(
+      ellipse at var(--glass-x) var(--glass-y),
+      rgb(255 255 255 / 19%) 0%,
+      rgb(115 208 255 / 8%) 10%,
+      rgb(255 124 198 / 6%) 18%,
+      transparent 38%
+    ),
+    radial-gradient(
+      ellipse at 20% 140%,
+      rgb(186 255 0 / 7%),
+      transparent 43%
+    ),
+    radial-gradient(
+      ellipse at 82% -30%,
+      rgb(113 192 255 / 8%),
+      transparent 42%
+    );
+
+  filter: blur(22px);
+  opacity: 0.82;
+  pointer-events: none;
+
+  transform:
+    translate3d(
+      var(--glass-shift-x),
+      var(--glass-shift-y),
+      0
+    )
+    scale(1.12);
+
+  transition: transform 220ms ease-out;
+}
+
+/* Multicolor refraction seen through the glass */
+
+.liquid-navbar-spectrum {
+  position: absolute;
+  z-index: -3;
+  inset: -120% -35%;
+  border-radius: 50%;
+
+  background:
+    conic-gradient(
+      from 115deg at var(--glass-x) var(--glass-y),
+      transparent 0deg,
+      rgb(85 186 255 / 0%) 35deg,
+      rgb(85 186 255 / 16%) 70deg,
+      rgb(178 101 255 / 14%) 105deg,
+      rgb(255 96 185 / 16%) 140deg,
+      rgb(255 194 102 / 10%) 180deg,
+      rgb(186 255 0 / 9%) 225deg,
+      rgb(87 222 255 / 13%) 270deg,
+      transparent 330deg
+    );
+
+  filter: blur(38px) saturate(150%);
+  mix-blend-mode: screen;
+  opacity: 0.55;
+  pointer-events: none;
+
+  transform:
+    translate3d(
+      calc(var(--glass-shift-x) * -1),
+      calc(var(--glass-shift-y) * -1),
+      0
+    )
+    rotate(-3deg);
+
+  transition: transform 320ms ease-out;
+}
+
+/* Bright moving glass hotspot */
+
+.liquid-navbar-caustic {
+  position: absolute;
+  z-index: 5;
+  width: 340px;
+  height: 160px;
+  left: var(--glass-x);
+  top: var(--glass-y);
+  border-radius: 50%;
+
+  background:
+    radial-gradient(
+      ellipse,
+      rgb(255 255 255 / 22%) 0%,
+      rgb(255 255 255 / 8%) 20%,
+      rgb(129 205 255 / 6%) 35%,
+      transparent 68%
+    );
+
+  filter: blur(18px);
+  mix-blend-mode: screen;
+  opacity: 0.72;
+  pointer-events: none;
+
+  transform:
+    translate(-50%, -50%)
+    translate3d(
+      var(--glass-shift-x),
+      var(--glass-shift-y),
+      0
+    );
+
+  transition:
+    left 90ms linear,
+    top 90ms linear,
+    transform 160ms ease-out;
+}
+
+/* Slow cinematic shine */
+
+.liquid-navbar-shine {
+  position: absolute;
+  z-index: 6;
+  top: -80%;
+  left: -35%;
+  width: 22%;
+  height: 260%;
+
+  background:
+    linear-gradient(
+      90deg,
+      transparent,
+      rgb(255 255 255 / 4%),
+      rgb(255 255 255 / 22%),
+      rgb(210 239 255 / 10%),
+      transparent
+    );
+
+  filter: blur(8px);
+  opacity: 0;
+  pointer-events: none;
+  transform: rotate(18deg);
+
+  animation:
+    liquid-navbar-shine 8s
+    cubic-bezier(0.55, 0, 0.25, 1)
+    infinite;
+}
+
+/* Stronger material after scrolling */
+
+.liquid-navbar-scrolled {
+  border-color: rgb(255 255 255 / 21%);
+
+  background:
+    linear-gradient(
+      115deg,
+      rgb(255 255 255 / 15%) 0%,
+      rgb(255 255 255 / 5%) 30%,
+      rgb(255 255 255 / 2%) 53%,
+      rgb(186 255 0 / 4%) 76%,
+      rgb(255 255 255 / 10%) 100%
+    ),
+    rgb(8 9 8 / 53%);
+
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 40%),
+    inset 0 -1px 0 rgb(255 255 255 / 7%),
+    inset 14px 0 35px rgb(255 255 255 / 3%),
+    0 18px 58px rgb(0 0 0 / 42%),
+    0 3px 12px rgb(0 0 0 / 26%);
+
+  backdrop-filter:
+    blur(30px)
+    saturate(195%)
+    contrast(115%)
+    brightness(106%);
+
+  -webkit-backdrop-filter:
+    blur(30px)
+    saturate(195%)
+    contrast(115%)
+    brightness(106%);
+}
+
+.navbar-logo {
+  filter:
+    drop-shadow(
+      0 1px 0 rgb(255 255 255 / 8%)
+    )
+    drop-shadow(
+      0 4px 12px rgb(0 0 0 / 18%)
+    );
+}
+
+/* =========================================================
+   DESKTOP LIQUID NAVIGATION
+   ========================================================= */
+
+@media (min-width: 768px) {
+  .desktop-nav-shell {
+    position: absolute;
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    width: clamp(430px, 36vw, 575px);
+    height: 50px;
+    padding: 4px;
+    overflow: hidden;
+
+    border: 1px solid rgb(255 255 255 / 9%);
+    border-radius: 999px;
+
+    background:
+      linear-gradient(
+        180deg,
+        rgb(255 255 255 / 6%),
+        rgb(255 255 255 / 1.5%)
+      ),
+      rgb(0 0 0 / 12%);
+
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 10%),
+      inset 0 -1px 0 rgb(0 0 0 / 16%),
+      0 5px 18px rgb(0 0 0 / 10%);
+
+    backdrop-filter:
+      blur(14px)
+      saturate(150%);
+
+    -webkit-backdrop-filter:
+      blur(14px)
+      saturate(150%);
+
+    isolation: isolate;
+  }
+
+  .desktop-nav-shell::before {
+    position: absolute;
+    z-index: 4;
+    top: 1px;
+    left: 10%;
+    width: 48%;
+    height: 1px;
+
+    background:
+      linear-gradient(
+        90deg,
+        transparent,
+        rgb(255 255 255 / 38%),
+        transparent
+      );
+
+    content: "";
+    pointer-events: none;
+  }
+
+  .desktop-nav-liquid-indicator {
+    position: absolute;
+    z-index: 0;
+    top: 4px;
+    bottom: 4px;
+    left: 4px;
+    width: calc((100% - 8px) / 5);
+    overflow: hidden;
+
+    border: 1px solid rgb(255 255 255 / 17%);
+    border-radius: 999px;
+
+    background:
+      radial-gradient(
+        circle at 28% 0%,
+        rgb(255 255 255 / 28%),
+        transparent 38%
+      ),
+      linear-gradient(
+        135deg,
+        rgb(255 255 255 / 13%),
+        rgb(128 206 255 / 5%) 36%,
+        rgb(255 104 192 / 5%) 64%,
+        rgb(186 255 0 / 7%)
+      ),
+      rgb(255 255 255 / 4%);
+
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 35%),
+      inset 0 -1px 0 rgb(255 255 255 / 4%),
+      0 7px 22px rgb(0 0 0 / 16%),
+      0 0 24px rgb(186 255 0 / 4%);
+
+    backdrop-filter:
+      blur(16px)
+      saturate(180%)
+      brightness(112%);
+
+    -webkit-backdrop-filter:
+      blur(16px)
+      saturate(180%)
+      brightness(112%);
+
+    transition:
+      transform 560ms
+      cubic-bezier(0.22, 1, 0.36, 1);
+
+    will-change: transform;
+  }
+
+  .desktop-nav-liquid-indicator::before {
+    position: absolute;
+    z-index: 3;
+    inset: 0;
+    padding: 1px;
+    border-radius: inherit;
+
+    background:
+      conic-gradient(
+        from 160deg,
+        rgb(255 255 255 / 12%),
+        rgb(113 211 255 / 40%),
+        rgb(255 119 201 / 32%),
+        rgb(255 255 255 / 58%),
+        rgb(186 255 0 / 30%),
+        rgb(255 255 255 / 12%)
+      );
+
+    content: "";
+    pointer-events: none;
+
+    -webkit-mask:
+      linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+
+    -webkit-mask-composite: xor;
+
+    mask:
+      linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+
+    mask-composite: exclude;
+  }
+
+  .desktop-nav-liquid-indicator::after {
+    position: absolute;
+    z-index: 3;
+    top: 1px;
+    left: 17%;
+    width: 52%;
+    height: 1px;
+
+    border-radius: 999px;
+    background: rgb(255 255 255 / 72%);
+
+    box-shadow:
+      0 1px 7px rgb(255 255 255 / 22%);
+
+    content: "";
+    opacity: 0.72;
+  }
+
+  .desktop-indicator-reflection {
+    position: absolute;
+    z-index: 1;
+    inset: -35%;
+
+    background:
+      radial-gradient(
+        ellipse at 28% 8%,
+        rgb(255 255 255 / 24%),
+        transparent 34%
+      ),
+      radial-gradient(
+        ellipse at 75% 115%,
+        rgb(186 255 0 / 8%),
+        transparent 42%
+      );
+
+    filter: blur(7px);
+    pointer-events: none;
+  }
+
+  .desktop-indicator-spectrum {
+    position: absolute;
+    z-index: 0;
+    inset: -90%;
+
+    background:
+      conic-gradient(
+        from 100deg,
+        transparent,
+        rgb(99 196 255 / 18%),
+        rgb(181 101 255 / 14%),
+        rgb(255 95 186 / 18%),
+        rgb(186 255 0 / 12%),
+        transparent
+      );
+
+    filter: blur(18px);
+    mix-blend-mode: screen;
+    opacity: 0.65;
+    pointer-events: none;
+
+    animation:
+      desktop-spectrum-drift 8s
+      linear infinite;
+  }
+
+  .desktop-nav-link {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    justify-content: center;
+    padding-inline: 11px;
+
+    border-radius: 999px;
+
+    color: rgb(255 255 255 / 54%);
+    font-size: clamp(11px, 0.75vw, 13px);
+    font-weight: 650;
+    line-height: 1;
+    letter-spacing: -0.012em;
+    white-space: nowrap;
+
+    transition:
+      color 260ms ease,
+      text-shadow 260ms ease,
+      transform 260ms
+      cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .desktop-nav-link:hover,
+  .desktop-nav-link:focus-visible,
+  .desktop-nav-link-active {
+    color: #ffffff;
+  }
+
+  .desktop-nav-link-active {
+    text-shadow:
+      0 1px 0 rgb(255 255 255 / 10%),
+      0 0 16px rgb(255 255 255 / 16%);
+  }
+
+  .desktop-nav-link:focus-visible {
+    outline: none;
+  }
+
+  .desktop-nav-link:active {
+    transform: scale(0.96);
+  }
+}
+
+/* =========================================================
+   LIQUID GREEN LOGIN BUTTON
+   ========================================================= */
+
+@media (min-width: 768px) {
+  .liquid-login-button {
+    height: 48px;
+    min-width: 128px;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    padding: 4px 5px 4px 21px;
+    overflow: hidden;
+
+    border: 1px solid rgb(233 255 177 / 82%);
+    border-radius: 999px;
+
+    background:
+      radial-gradient(
+        circle at 25% -15%,
+        rgb(255 255 255 / 88%),
+        transparent 34%
+      ),
+      linear-gradient(
+        135deg,
+        #d3ff4b 0%,
+        #baff00 45%,
+        #9de600 100%
+      );
+
+    color: #050605;
+    font-size: 12px;
+    font-weight: 850;
+    letter-spacing: -0.02em;
+
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 92%),
+      inset 0 -2px 4px rgb(55 84 0 / 25%),
+      inset 12px 0 22px rgb(255 255 255 / 12%),
+      0 9px 28px rgb(186 255 0 / 15%);
+
+    transition:
+      transform 360ms
+      cubic-bezier(0.22, 1, 0.36, 1),
+      box-shadow 360ms ease,
+      filter 360ms ease;
+  }
+
+  .liquid-login-button::before {
+    position: absolute;
+    z-index: 3;
+    inset: 0;
+    padding: 1px;
+    border-radius: inherit;
+
+    background:
+      conic-gradient(
+        from 130deg,
+        rgb(255 255 255 / 76%),
+        rgb(185 245 255 / 38%),
+        rgb(255 190 230 / 32%),
+        rgb(255 255 255 / 55%),
+        rgb(255 255 255 / 76%)
+      );
+
+    content: "";
+    pointer-events: none;
+
+    -webkit-mask:
+      linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+
+    -webkit-mask-composite: xor;
+
+    mask:
+      linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+
+    mask-composite: exclude;
+  }
+
+  .liquid-login-reflection {
+    position: absolute;
+    z-index: 0;
+    top: -80%;
+    left: -15%;
+    width: 65%;
+    height: 220%;
+    border-radius: 50%;
+
+    background:
+      radial-gradient(
+        ellipse,
+        rgb(255 255 255 / 65%),
+        rgb(255 255 255 / 12%) 35%,
+        transparent 67%
+      );
+
+    filter: blur(8px);
+    opacity: 0.7;
+    pointer-events: none;
+    transform: rotate(16deg);
+
+    transition:
+      transform 500ms
+      cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .liquid-login-button:hover {
+    transform: translateY(-2px) scale(1.018);
+
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 100%),
+      inset 0 -2px 4px rgb(55 84 0 / 20%),
+      inset 12px 0 22px rgb(255 255 255 / 16%),
+      0 15px 38px rgb(186 255 0 / 25%);
+
+    filter: saturate(108%) brightness(104%);
+  }
+
+  .liquid-login-button:hover
+    .liquid-login-reflection {
+    transform:
+      translateX(110%)
+      rotate(16deg);
+  }
+
+  .liquid-login-button:active {
+    transform: translateY(0) scale(0.98);
+  }
+
+  .liquid-login-button:focus-visible {
+    outline: 2px solid rgb(255 255 255 / 90%);
+    outline-offset: 3px;
+  }
+
+  .liquid-login-icon {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    width: 38px;
+    height: 38px;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+
+    border: 1px solid rgb(255 255 255 / 18%);
+    border-radius: 999px;
+
+    background:
+      radial-gradient(
+        circle at 30% 8%,
+        rgb(255 255 255 / 18%),
+        transparent 35%
+      ),
+      #050605;
+
+    color: #baff00;
+
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 18%),
+      inset 0 -1px 0 rgb(0 0 0 / 35%),
+      0 5px 14px rgb(0 0 0 / 24%);
+
+    transition:
+      transform 430ms
+      cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .liquid-login-button:hover
+    .liquid-login-icon {
+    transform: rotate(45deg);
+  }
+}
+
+/* =========================================================
+   MOBILE BUTTON AND MENU
+   ========================================================= */
+
+.liquid-menu-button {
+  overflow: hidden;
+  border: 1px solid rgb(255 255 255 / 16%);
+  border-radius: 999px;
+
+  background:
+    radial-gradient(
+      circle at 25% 0%,
+      rgb(255 255 255 / 20%),
+      transparent 38%
+    ),
+    linear-gradient(
+      145deg,
+      rgb(255 255 255 / 10%),
+      rgb(255 255 255 / 2%)
+    );
+
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 24%),
+    inset 0 -1px 0 rgb(255 255 255 / 4%),
+    0 6px 18px rgb(0 0 0 / 20%);
+
+  backdrop-filter:
+    blur(15px)
+    saturate(170%);
+
+  -webkit-backdrop-filter:
+    blur(15px)
+    saturate(170%);
+}
+
+.liquid-menu-button::before {
+  position: absolute;
+  z-index: 2;
+  inset: 0;
+  padding: 1px;
+  border-radius: inherit;
+
+  background:
+    conic-gradient(
+      from 130deg,
+      rgb(255 255 255 / 15%),
+      rgb(105 203 255 / 38%),
+      rgb(255 113 196 / 28%),
+      rgb(255 255 255 / 52%),
+      rgb(186 255 0 / 22%),
+      rgb(255 255 255 / 15%)
+    );
+
+  content: "";
+  pointer-events: none;
+
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+
+  -webkit-mask-composite: xor;
+
+  mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+
+  mask-composite: exclude;
+}
+
+.liquid-menu-reflection {
+  position: absolute;
+  inset: -45%;
+
+  background:
+    radial-gradient(
+      circle at 30% 20%,
+      rgb(255 255 255 / 24%),
+      transparent 38%
+    );
+
+  filter: blur(5px);
+  pointer-events: none;
+}
+
+.liquid-mobile-menu {
+  pointer-events: auto;
+  isolation: isolate;
+
+  border: 1px solid rgb(255 255 255 / 17%);
+  border-radius: 28px;
+
+  background:
+    linear-gradient(
+      135deg,
+      rgb(255 255 255 / 13%) 0%,
+      rgb(255 255 255 / 4%) 38%,
+      rgb(186 255 0 / 3%) 73%,
+      rgb(255 255 255 / 7%) 100%
+    ),
+    rgb(8 9 8 / 68%);
+
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 27%),
+    inset 0 -1px 0 rgb(255 255 255 / 4%),
+    0 28px 80px rgb(0 0 0 / 62%),
+    0 3px 12px rgb(0 0 0 / 25%);
+
+  backdrop-filter:
+    blur(32px)
+    saturate(185%)
+    contrast(110%);
+
+  -webkit-backdrop-filter:
+    blur(32px)
+    saturate(185%)
+    contrast(110%);
+
+  transition:
+    opacity 330ms ease,
+    visibility 330ms ease,
+    transform 430ms
+    cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.liquid-mobile-menu::before {
+  position: absolute;
+  z-index: 5;
+  inset: 0;
+  padding: 1px;
+  border-radius: inherit;
+
+  background:
+    conic-gradient(
+      from 145deg,
+      rgb(255 255 255 / 15%),
+      rgb(108 207 255 / 32%),
+      rgb(255 110 196 / 25%),
+      rgb(255 255 255 / 42%),
+      rgb(186 255 0 / 19%),
+      rgb(255 255 255 / 15%)
+    );
+
+  content: "";
+  pointer-events: none;
+
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+
+  -webkit-mask-composite: xor;
+
+  mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+
+  mask-composite: exclude;
+}
+
+.liquid-mobile-spectrum {
+  position: absolute;
+  z-index: 0;
+  inset: -45%;
+
+  background:
+    conic-gradient(
+      from 100deg,
+      transparent,
+      rgb(89 190 255 / 13%),
+      rgb(179 99 255 / 10%),
+      rgb(255 96 185 / 13%),
+      rgb(186 255 0 / 7%),
+      transparent
+    );
+
+  filter: blur(40px);
+  mix-blend-mode: screen;
+  opacity: 0.7;
+  pointer-events: none;
+
+  animation:
+    mobile-spectrum-drift 11s
+    linear infinite;
+}
+
+.liquid-mobile-shine {
+  position: absolute;
+  z-index: 1;
+  top: 0;
+  left: 8%;
+  width: 62%;
+  height: 1px;
+
+  background:
+    linear-gradient(
+      90deg,
+      transparent,
+      rgb(255 255 255 / 65%),
+      transparent
+    );
+
+  pointer-events: none;
+}
+
+.mobile-navigation-link {
+  text-shadow:
+    0 1px 0 rgb(255 255 255 / 5%);
+}
+
+.mobile-login-button {
+  border: 1px solid rgb(233 255 177 / 75%);
+
+  background:
+    radial-gradient(
+      circle at 25% -30%,
+      rgb(255 255 255 / 80%),
+      transparent 36%
+    ),
+    linear-gradient(
+      135deg,
+      #d0ff45,
+      #baff00 48%,
+      #9de800
+    );
+
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 86%),
+    inset 0 -2px 4px rgb(55 84 0 / 20%),
+    0 10px 28px rgb(186 255 0 / 13%);
+}
+
+.mobile-login-reflection {
+  position: absolute;
+  top: -80%;
+  left: -10%;
+  width: 54%;
+  height: 230%;
+
+  background:
+    radial-gradient(
+      ellipse,
+      rgb(255 255 255 / 60%),
+      transparent 65%
+    );
+
+  filter: blur(7px);
+  opacity: 0.65;
+  pointer-events: none;
+  transform: rotate(15deg);
+}
+
+/* =========================================================
+   TABLET ADJUSTMENTS
+   ========================================================= */
+
+@media (min-width: 768px) and (max-width: 1050px) {
+  .desktop-nav-shell {
+    width: 400px;
+    height: 44px;
+  }
+
+  .desktop-nav-link {
+    padding-inline: 7px;
+    font-size: 10px;
+  }
+
+  .liquid-login-button {
+    min-width: 105px;
+    height: 44px;
+    padding-left: 17px;
+  }
+
+  .liquid-login-icon {
+    width: 34px;
+    height: 34px;
+  }
+}
+
+/* =========================================================
+   ANIMATIONS
+   ========================================================= */
+
+@keyframes liquid-navbar-shine {
+  0%,
+  12% {
+    left: -35%;
+    opacity: 0;
+  }
+
+  22% {
+    opacity: 0.75;
+  }
+
+  40% {
+    left: 118%;
+    opacity: 0;
+  }
+
+  100% {
+    left: 118%;
+    opacity: 0;
+  }
+}
+
+@keyframes desktop-spectrum-drift {
+  0% {
+    transform: rotate(0deg) scale(1.08);
+  }
+
+  50% {
+    transform: rotate(180deg) scale(1.18);
+  }
+
+  100% {
+    transform: rotate(360deg) scale(1.08);
+  }
+}
+
+@keyframes mobile-spectrum-drift {
+  0% {
+    transform:
+      translate3d(-3%, -2%, 0)
+      rotate(0deg);
+  }
+
+  50% {
+    transform:
+      translate3d(4%, 3%, 0)
+      rotate(180deg);
+  }
+
+  100% {
+    transform:
+      translate3d(-3%, -2%, 0)
+      rotate(360deg);
+  }
+}
+
+/* =========================================================
+   ACCESSIBILITY
+   ========================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  .liquid-navbar,
+  .liquid-navbar-refraction,
+  .liquid-navbar-spectrum,
+  .liquid-navbar-caustic,
+  .liquid-navbar-shine,
+  .desktop-nav-liquid-indicator,
+  .desktop-indicator-spectrum,
+  .desktop-nav-link,
+  .liquid-login-button,
+  .liquid-login-reflection,
+  .liquid-login-icon,
+  .liquid-mobile-menu,
+  .liquid-mobile-spectrum {
+    animation: none !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* =========================================================
+   BACKDROP-FILTER FALLBACK
+   ========================================================= */
+
+@supports not (
+  (backdrop-filter: blur(20px)) or
+    (-webkit-backdrop-filter: blur(20px))
+) {
+  .liquid-navbar {
+    background: rgb(18 20 16 / 96%);
+  }
+
+  .desktop-nav-shell {
+    background: rgb(14 16 12 / 96%);
+  }
+
+  .liquid-mobile-menu {
+    background: rgb(12 14 10 / 98%);
+  }
 }
