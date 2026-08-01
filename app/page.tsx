@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 
 import FeaturesSection from "@/components/home/features";
+import ProgramsSection from "@/components/home/programs";
 import Navbar from "@/components/layout/navbar";
 
 function ArrowIcon() {
@@ -125,7 +126,7 @@ export default function HomePage() {
     <>
       <Navbar />
 
-      <main className="overflow-x-hidden bg-[#080908] text-white">
+      <main className="overflow-x-clip bg-[#080908] text-white">
         <section
           id="home"
           className="relative isolate min-h-[calc(100svh-76px)] overflow-hidden border-b border-[#b7ef00]/20 sm:min-h-[calc(100svh-84px)] lg:min-h-[calc(100svh-96px)]"
@@ -249,10 +250,7 @@ export default function HomePage() {
 
         <FeaturesSection />
 
-        <section
-          id="programs"
-          className="min-h-screen border-b border-white/5 bg-[#080908]"
-        />
+<ProgramsSection />
       </main>
     </>
   );

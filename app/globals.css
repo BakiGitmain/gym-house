@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "lenis/dist/lenis.css";
 
 *,
 *::before,
@@ -21,7 +22,7 @@ html {
   width: 100%;
   margin: 0;
   padding: 0;
-  scroll-behavior: smooth;
+  scroll-behavior: auto;
   background: var(--page-black);
 }
 
@@ -1249,5 +1250,38 @@ section[id] {
 
   .liquid-mobile-menu {
     background: rgb(12 14 10 / 98%);
+  }
+}
+.scroll-stack-card {
+  transition: none !important;
+}
+html {
+  scroll-behavior: auto;
+  overflow-x: clip;
+}
+
+body {
+  overflow-x: clip;
+}
+
+.scroll-stack {
+  overflow: visible;
+}
+
+.scroll-stack-shell {
+  width: 100%;
+}
+
+.scroll-stack-card {
+  width: 100%;
+  transform: translate3d(0, 0, 0);
+  transform-origin: top center;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+@media (max-width: 640px) {
+  .scroll-stack-shell {
+    position: sticky;
   }
 }
