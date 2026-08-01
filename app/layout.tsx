@@ -1,5 +1,8 @@
 import type { Metadata } from "next";
 import { Geist } from "next/font/google";
+
+import WebsiteLoader from "@/components/layout/website-loader";
+
 import "./globals.css";
 
 const geist = Geist({
@@ -19,7 +22,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={geist.className}>
+      <body
+        className={`${geist.className} bg-[#080908]`}
+      >
+        <WebsiteLoader />
+
         {children}
       </body>
     </html>

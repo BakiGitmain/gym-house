@@ -77,19 +77,120 @@ export default function Navbar() {
   const indicatorIndex =
     hoveredIndex ?? activeIndex;
 
+  function resetPointerEffect() {
+    const element = navbarRef.current;
+
+    if (!element) {
+      return;
+    }
+
+    element.style.setProperty(
+      "--glass-x",
+      "50%",
+    );
+
+    element.style.setProperty(
+      "--glass-y",
+      "0%",
+    );
+
+    element.style.setProperty(
+      "--glass-shift-x",
+      "0px",
+    );
+
+    element.style.setProperty(
+      "--glass-shift-y",
+      "0px",
+    );
+
+    element.style.setProperty(
+      "--glass-rotate-x",
+      "0deg",
+    );
+
+    element.style.setProperty(
+      "--glass-rotate-y",
+      "0deg",
+    );
+  }
+
   useEffect(() => {
+    if (!isMenuOpen) {
+      return;
+    }
+
     const previousOverflow =
       document.body.style.overflow;
 
-    document.body.style.overflow = isMenuOpen
-      ? "hidden"
-      : "";
+    document.body.style.overflow = "hidden";
 
     return () => {
       document.body.style.overflow =
         previousOverflow;
     };
   }, [isMenuOpen]);
+
+  useEffect(() => {
+    const desktopMedia = window.matchMedia(
+      "(min-width: 768px)",
+    );
+
+    function handleViewportChange() {
+      setHoveredIndex(null);
+      resetPointerEffect();
+
+      if (desktopMedia.matches) {
+        setIsMenuOpen(false);
+      }
+    }
+
+    handleViewportChange();
+
+    desktopMedia.addEventListener(
+      "change",
+      handleViewportChange,
+    );
+
+    window.addEventListener(
+      "resize",
+      handleViewportChange,
+    );
+
+    return () => {
+      desktopMedia.removeEventListener(
+        "change",
+        handleViewportChange,
+      );
+
+      window.removeEventListener(
+        "resize",
+        handleViewportChange,
+      );
+    };
+  }, []);
+
+  useEffect(() => {
+    function handleEscapeKey(
+      event: KeyboardEvent,
+    ) {
+      if (event.key === "Escape") {
+        setIsMenuOpen(false);
+      }
+    }
+
+    window.addEventListener(
+      "keydown",
+      handleEscapeKey,
+    );
+
+    return () => {
+      window.removeEventListener(
+        "keydown",
+        handleEscapeKey,
+      );
+    };
+  }, []);
 
   useEffect(() => {
     function handleScroll() {
@@ -196,6 +297,7 @@ export default function Navbar() {
     index: number,
   ) {
     setActiveIndex(index);
+    setHoveredIndex(null);
     setIsMenuOpen(false);
   }
 
@@ -210,6 +312,13 @@ export default function Navbar() {
 
     const bounds =
       element.getBoundingClientRect();
+
+    if (
+      bounds.width === 0 ||
+      bounds.height === 0
+    ) {
+      return;
+    }
 
     const x =
       ((event.clientX - bounds.left) /
@@ -255,44 +364,6 @@ export default function Navbar() {
     element.style.setProperty(
       "--glass-rotate-y",
       `${normalizedX * 0.75}deg`,
-    );
-  }
-
-  function resetPointerEffect() {
-    const element = navbarRef.current;
-
-    if (!element) {
-      return;
-    }
-
-    element.style.setProperty(
-      "--glass-x",
-      "50%",
-    );
-
-    element.style.setProperty(
-      "--glass-y",
-      "0%",
-    );
-
-    element.style.setProperty(
-      "--glass-shift-x",
-      "0px",
-    );
-
-    element.style.setProperty(
-      "--glass-shift-y",
-      "0px",
-    );
-
-    element.style.setProperty(
-      "--glass-rotate-x",
-      "0deg",
-    );
-
-    element.style.setProperty(
-      "--glass-rotate-y",
-      "0deg",
     );
   }
 
@@ -478,6 +549,8 @@ export default function Navbar() {
       <button
         type="button"
         aria-label="Close navigation menu"
+        aria-hidden={!isMenuOpen}
+        tabIndex={isMenuOpen ? 0 : -1}
         onClick={closeMenu}
         className={`fixed inset-0 z-[100] bg-black/60 backdrop-blur-[6px] transition-all duration-300 md:hidden ${
           isMenuOpen
@@ -488,6 +561,7 @@ export default function Navbar() {
 
       <div
         id="mobile-navigation"
+        aria-hidden={!isMenuOpen}
         className={`liquid-mobile-menu fixed left-3 right-3 top-[84px] z-[110] overflow-hidden sm:left-5 sm:right-5 sm:top-[96px] md:hidden ${
           isMenuOpen
             ? "visible translate-y-0 scale-100 opacity-100"
@@ -510,6 +584,9 @@ export default function Navbar() {
               <Link
                 key={link.label}
                 href={link.href}
+                tabIndex={
+                  isMenuOpen ? 0 : -1
+                }
                 onClick={() => {
                   selectNavigation(index);
                 }}
@@ -530,10 +607,12 @@ export default function Navbar() {
 
           <Link
             href="/login"
+            tabIndex={isMenuOpen ? 0 : -1}
             onClick={closeMenu}
             className="mobile-login-button relative mt-5 flex min-h-[52px] w-full items-center justify-center overflow-hidden rounded-full px-6 text-sm font-black text-black transition-transform duration-200 active:scale-[0.98]"
           >
             <span className="mobile-login-reflection" />
+
             <span className="relative z-10">
               Login
             </span>

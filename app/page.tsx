@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 
+import FeaturesSection from "@/components/home/features";
 import Navbar from "@/components/layout/navbar";
 
 function ArrowIcon() {
@@ -96,7 +97,11 @@ function CommunityCount() {
   );
 }
 
-function StartButton({ mobile = false }: { mobile?: boolean }) {
+function StartButton({
+  mobile = false,
+}: {
+  mobile?: boolean;
+}) {
   return (
     <Link
       href="#programs"
@@ -216,6 +221,7 @@ export default function HomePage() {
                 width={1200}
                 height={1200}
                 priority
+                data-page-loader="true"
                 sizes="(max-width: 640px) 100vw, (max-width: 1024px) 85vw, 840px"
                 className="h-auto w-full origin-top select-none object-contain"
               />
@@ -240,6 +246,8 @@ export default function HomePage() {
             </p>
           </div>
         </section>
+
+        <FeaturesSection />
 
         <section
           id="programs"
