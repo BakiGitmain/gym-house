@@ -317,22 +317,15 @@ export default function FeaturesSection() {
           <div className="pointer-events-none absolute inset-x-0 top-0 z-40 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
 
           <div className="absolute inset-y-0 right-[-6%] z-10 w-[56%] sm:w-[42%] lg:w-[43%] xl:w-[42%]">
-            <Image
-              src="/images/trainer.png"
-              alt="Muscular fitness trainer"
-              fill
-              priority
-              data-page-loader="true"
-              sizes="(max-width: 639px) 56vw, (max-width: 1023px) 42vw, 560px"
-              className="select-none object-contain object-bottom"
-              style={{
-                objectPosition: "100% 100%",
-                transform:
-                  "scale(1.08) translateX(2%)",
-                transformOrigin:
-                  "right bottom",
-              }}
-            />
+          <Image
+            src="/images/trainer.png"
+            alt="Muscular fitness trainer"
+            fill
+            loading="eager"
+            data-page-loader="true"
+            sizes="(max-width: 639px) 56vw, (max-width: 1023px) 42vw, 560px"
+            className="select-none object-contain object-bottom"
+          />
           </div>
 
           <div className="pointer-events-none absolute inset-y-0 right-[30%] z-20 w-[24%] bg-gradient-to-r from-[#10130e] via-[#10130e]/85 to-transparent sm:right-[29%] sm:w-[20%] lg:right-[30%]" />

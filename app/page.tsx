@@ -221,7 +221,7 @@ export default function HomePage() {
                 alt="Muscular fitness athlete holding a dumbbell"
                 width={1200}
                 height={1200}
-                priority
+                preload
                 data-page-loader="true"
                 sizes="(max-width: 640px) 100vw, (max-width: 1024px) 85vw, 840px"
                 className="h-auto w-full origin-top select-none object-contain"

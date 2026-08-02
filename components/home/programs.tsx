@@ -218,17 +218,19 @@ function ProgramBackground({
       className="pointer-events-none absolute inset-0 overflow-hidden"
     >
       <div className="absolute inset-0 lg:left-[38%]">
-        <Image
-          src={program.image}
-          alt=""
-          fill
-          sizes="(max-width: 1023px) 100vw, 720px"
-          className="object-cover grayscale opacity-[0.34] brightness-75 contrast-125 transition-transform duration-700 ease-out group-hover:scale-[1.025] sm:opacity-[0.4] lg:opacity-[0.58]"
-          style={{
-            objectPosition:
-              program.imagePosition,
-          }}
-        />
+<Image
+  src={program.image}
+  alt=""
+  fill
+  loading="eager"
+  data-page-loader="true"
+  sizes="(max-width: 1023px) 100vw, 720px"
+  className="object-cover grayscale opacity-[0.34] brightness-75 contrast-125 transition-transform duration-700 ease-out group-hover:scale-[1.025] sm:opacity-[0.4] lg:opacity-[0.58]"
+  style={{
+    objectPosition:
+      program.imagePosition,
+  }}
+/>
       </div>
 
       <div

@@ -145,12 +145,14 @@ function TrainingSlide({
     >
       <div className="relative aspect-[4/5] overflow-hidden rounded-[26px] border border-white/10 bg-[#111111]">
         <Image
-          src={item.image}
-          alt={item.alt}
-          fill
-          draggable={false}
-          sizes="(max-width: 640px) 88vw, 430px"
-          className="pointer-events-none object-cover grayscale transition duration-700 ease-out group-hover:scale-[1.035] group-hover:grayscale-0"
+        src={item.image}
+        alt={item.alt}
+        fill
+        draggable={false}
+        loading="eager"
+        data-page-loader="true"
+        sizes="(max-width: 640px) 88vw, 430px"
+        className="pointer-events-none object-cover grayscale transition duration-700 ease-out group-hover:scale-[1.035] group-hover:grayscale-0"
         />
 
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black via-black/5 to-black/10" />
