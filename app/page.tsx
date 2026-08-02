@@ -5,6 +5,7 @@ import FeaturesSection from "@/components/home/features";
 import ProgramsSection from "@/components/home/programs";
 import Navbar from "@/components/layout/navbar";
 import TrainingCoursesSection from "@/components/home/training-courses";
+import TrainersSection from "@/components/home/trainers";
 function ArrowIcon() {
   return (
     <svg
@@ -254,6 +255,7 @@ export default function HomePage() {
 
 <ProgramsSection />
 <ExperienceSection />
+<TrainersSection />
       </main>
     </>
   );
