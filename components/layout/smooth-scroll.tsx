@@ -20,7 +20,16 @@ export default function SmoothScroll({
         wheelMultiplier: 0.9,
         touchMultiplier: 1.15,
         infinite: false,
-        anchors: true,
+
+        // Smoothly handles every internal link:
+        // #home, #features, #programs, #membership, etc.
+        anchors: {
+          lock: true,
+        },
+
+        // Stops any previous wheel momentum before
+        // moving to the selected section.
+        stopInertiaOnNavigate: true,
       }}
     >
       {children}

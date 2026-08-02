@@ -45,29 +45,29 @@ const membershipBenefits = [
 
 export default function MembershipSection() {
   return (
-    <section
-      id="membership"
-      aria-labelledby="membership-title"
-      className="
-        relative
-        isolate
-        overflow-hidden
-        border-y
-        border-white/[0.05]
-        bg-[#050605]
-        px-4
-        py-24
-        text-white
+<section
+  id="membership"
+  aria-labelledby="membership-title"
+  className="
+    relative
+    isolate
+    overflow-hidden
+    border-y
+    border-white/[0.05]
+    bg-[#050605]
+    px-4
+    py-24
+    text-white
 
-        sm:px-8
-        sm:py-32
+    sm:px-8
+    sm:py-32
 
-        lg:px-12
-        lg:py-40
+    lg:px-12
+    lg:py-40
 
-        xl:px-16
-      "
-    >
+    xl:px-16
+  "
+>
       {/* Large soft background light */}
       <div
         aria-hidden="true"

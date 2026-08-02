@@ -1,10 +1,12 @@
 "use client";
 
 import Link from "next/link";
+import { useLenis } from "lenis/react";
 import {
   useEffect,
   useState,
   type CSSProperties,
+  type MouseEvent,
 } from "react";
 
 const navigationLinks = [
@@ -13,20 +15,20 @@ const navigationLinks = [
     href: "#home",
   },
   {
-    label: "About",
-    href: "#about",
-  },
-  {
     label: "Features",
     href: "#features",
   },
   {
-    label: "Services",
+    label: "Courses",
     href: "#services",
   },
   {
-    label: "Training",
+    label: "Programs",
     href: "#programs",
+  },
+  {
+    label: "Experience",
+    href: "#about",
   },
 ];
 
@@ -126,6 +128,7 @@ function MenuIcon({
 }
 
 export default function Navbar() {
+  const lenis = useLenis();
   const [isMenuOpen, setIsMenuOpen] =
     useState(false);
 
@@ -277,13 +280,79 @@ export default function Navbar() {
     setIsMenuOpen(false);
   }
 
-  function selectNavigation(
-    index: number,
-  ) {
-    setActiveIndex(index);
-    setHoveredIndex(null);
-    closeMenu();
+function selectNavigation(
+  event: MouseEvent<HTMLAnchorElement>,
+  index: number,
+  href: string,
+) {
+  event.preventDefault();
+
+  setActiveIndex(index);
+  setHoveredIndex(null);
+  closeMenu();
+
+  /*
+   * Home always scrolls to the absolute beginning.
+   * This also removes the previous section hash
+   * from the browser URL.
+   */
+  if (href === "#home") {
+    window.history.replaceState(
+      null,
+      "",
+      `${window.location.pathname}${window.location.search}`,
+    );
+
+    if (lenis) {
+      lenis.scrollTo(0, {
+        duration: 1.15,
+        force: true,
+      });
+
+      return;
+    }
+
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
+
+    return;
   }
+
+  const target =
+    document.querySelector<HTMLElement>(href);
+
+  if (!target) {
+    return;
+  }
+
+  window.history.replaceState(
+    null,
+    "",
+    href,
+  );
+
+  if (lenis) {
+    lenis.scrollTo(target, {
+      offset: -110,
+      duration: 1.15,
+      force: true,
+    });
+
+    return;
+  }
+
+  const targetPosition =
+    target.getBoundingClientRect().top +
+    window.scrollY -
+    110;
+
+  window.scrollTo({
+    top: targetPosition,
+    behavior: "smooth",
+  });
+}
 
   const navigationStyle = {
     "--navigation-index": indicatorIndex,
@@ -294,12 +363,18 @@ export default function Navbar() {
   return (
     <header className="simple-site-header">
       <div className="simple-navbar">
-        <Link
-          href="/"
-          onClick={closeMenu}
-          className="simple-brand"
-          aria-label="GYM House homepage"
-        >
+<Link
+  href="#home"
+  onClick={(event) => {
+    selectNavigation(
+      event,
+      0,
+      "#home",
+    );
+  }}
+  className="simple-brand"
+  aria-label="Return to the beginning of the homepage"
+>
           <LogoMark />
 
           <span className="simple-brand-name">
@@ -347,9 +422,13 @@ export default function Navbar() {
                   onBlur={() => {
                     setHoveredIndex(null);
                   }}
-                  onClick={() => {
-                    selectNavigation(index);
-                  }}
+                onClick={(event) => {
+                  selectNavigation(
+                    event,
+                    index,
+                    link.href,
+                  );
+                }}
                   className={`simple-navigation-link ${
                     isHighlighted
                       ? "is-highlighted"
@@ -440,8 +519,12 @@ export default function Navbar() {
                       ? "page"
                       : undefined
                   }
-                  onClick={() => {
-                    selectNavigation(index);
+                  onClick={(event) => {
+                    selectNavigation(
+                      event,
+                      index,
+                      link.href,
+                    );
                   }}
                   className={`simple-mobile-link ${
                     isActive

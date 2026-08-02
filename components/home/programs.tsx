@@ -1,5 +1,5 @@
 import Image from "next/image";
-
+import Link from "next/link";
 import ScrollStack, {
   ScrollStackItem,
 } from "@/components/ui/scroll-stack";
@@ -339,16 +339,17 @@ function ProgramCard({
             </div>
           </div>
 
-          <button
-            type="button"
-            className="flex min-h-12 w-full items-center justify-between rounded-full bg-[#b7ef00] px-5 text-xs font-black uppercase tracking-[0.04em] text-black transition-transform duration-300 hover:scale-[1.02] active:scale-[0.98] sm:w-auto sm:min-w-[160px]"
-          >
-            <span>See plan</span>
+<Link
+  href="#membership"
+  aria-label={`See membership plan for ${program.title}`}
+  className="group flex min-h-12 w-full items-center justify-between rounded-full bg-[#b7ef00] px-5 text-xs font-black uppercase tracking-[0.04em] text-black transition-transform duration-300 hover:scale-[1.02] active:scale-[0.98] sm:w-auto sm:min-w-[160px]"
+>
+  <span>See plan</span>
 
-            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-black text-[#b7ef00]">
-              <ArrowIcon />
-            </span>
-          </button>
+  <span className="flex h-8 w-8 items-center justify-center rounded-full bg-black text-[#b7ef00] transition-transform duration-300 group-hover:rotate-45">
+    <ArrowIcon />
+  </span>
+</Link>
         </div>
       </div>
     </article>

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist } from "next/font/google";
 
+import SmoothScroll from "@/components/layout/smooth-scroll";
 import WebsiteLoader from "@/components/layout/website-loader";
 
 import "./globals.css";
@@ -27,7 +28,9 @@ export default function RootLayout({
       >
         <WebsiteLoader />
 
-        {children}
+        <SmoothScroll>
+          {children}
+        </SmoothScroll>
       </body>
     </html>
   );
