@@ -3,9 +3,8 @@
 import Link from "next/link";
 import {
   useEffect,
-  useRef,
   useState,
-  type PointerEvent,
+  type CSSProperties,
 } from "react";
 
 const navigationLinks = [
@@ -31,19 +30,67 @@ const navigationLinks = [
   },
 ];
 
+function LogoMark() {
+  return (
+    <svg
+      viewBox="0 0 42 42"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden="true"
+      className="simple-brand-icon"
+    >
+      <path
+        d="M11.4 13.7C14.1 9.8 18.2 7.5 22.9 7.5C28.2 7.5 33 10.5 35.3 15.1"
+        stroke="currentColor"
+        strokeWidth="2.6"
+        strokeLinecap="round"
+      />
+
+      <path
+        d="M30.8 28.9C28.2 32.3 24.5 34.4 20.2 34.4C14.5 34.4 9.4 31 7.3 25.9"
+        stroke="currentColor"
+        strokeWidth="2.6"
+        strokeLinecap="round"
+      />
+
+      <path
+        d="M9.2 22.3L16.2 17.1L20.1 22L27.9 15.9"
+        stroke="currentColor"
+        strokeWidth="2.6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+
+      <path
+        d="M27.7 15.8L33.1 19.4"
+        stroke="currentColor"
+        strokeWidth="2.6"
+        strokeLinecap="round"
+      />
+
+      <path
+        d="M10 25.4L15.2 29"
+        stroke="currentColor"
+        strokeWidth="2.6"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
 function ArrowIcon() {
   return (
     <svg
       viewBox="0 0 24 24"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
-      className="h-[14px] w-[14px]"
       aria-hidden="true"
+      className="simple-arrow-icon"
     >
       <path
         d="M7 17L17 7"
         stroke="currentColor"
-        strokeWidth="2.35"
+        strokeWidth="2"
         strokeLinecap="round"
         strokeLinejoin="round"
       />
@@ -51,7 +98,7 @@ function ArrowIcon() {
       <path
         d="M8 7H17V16"
         stroke="currentColor"
-        strokeWidth="2.35"
+        strokeWidth="2"
         strokeLinecap="round"
         strokeLinejoin="round"
       />
@@ -59,13 +106,27 @@ function ArrowIcon() {
   );
 }
 
+function MenuIcon({
+  isOpen,
+}: {
+  isOpen: boolean;
+}) {
+  return (
+    <span
+      className={`simple-menu-icon ${
+        isOpen ? "is-open" : ""
+      }`}
+      aria-hidden="true"
+    >
+      <span />
+      <span />
+      <span />
+    </span>
+  );
+}
+
 export default function Navbar() {
-  const navbarRef = useRef<HTMLDivElement>(null);
-
   const [isMenuOpen, setIsMenuOpen] =
-    useState(false);
-
-  const [isScrolled, setIsScrolled] =
     useState(false);
 
   const [activeIndex, setActiveIndex] =
@@ -76,44 +137,6 @@ export default function Navbar() {
 
   const indicatorIndex =
     hoveredIndex ?? activeIndex;
-
-  function resetPointerEffect() {
-    const element = navbarRef.current;
-
-    if (!element) {
-      return;
-    }
-
-    element.style.setProperty(
-      "--glass-x",
-      "50%",
-    );
-
-    element.style.setProperty(
-      "--glass-y",
-      "0%",
-    );
-
-    element.style.setProperty(
-      "--glass-shift-x",
-      "0px",
-    );
-
-    element.style.setProperty(
-      "--glass-shift-y",
-      "0px",
-    );
-
-    element.style.setProperty(
-      "--glass-rotate-x",
-      "0deg",
-    );
-
-    element.style.setProperty(
-      "--glass-rotate-y",
-      "0deg",
-    );
-  }
 
   useEffect(() => {
     if (!isMenuOpen) {
@@ -132,46 +155,7 @@ export default function Navbar() {
   }, [isMenuOpen]);
 
   useEffect(() => {
-    const desktopMedia = window.matchMedia(
-      "(min-width: 768px)",
-    );
-
-    function handleViewportChange() {
-      setHoveredIndex(null);
-      resetPointerEffect();
-
-      if (desktopMedia.matches) {
-        setIsMenuOpen(false);
-      }
-    }
-
-    handleViewportChange();
-
-    desktopMedia.addEventListener(
-      "change",
-      handleViewportChange,
-    );
-
-    window.addEventListener(
-      "resize",
-      handleViewportChange,
-    );
-
-    return () => {
-      desktopMedia.removeEventListener(
-        "change",
-        handleViewportChange,
-      );
-
-      window.removeEventListener(
-        "resize",
-        handleViewportChange,
-      );
-    };
-  }, []);
-
-  useEffect(() => {
-    function handleEscapeKey(
+    function handleEscape(
       event: KeyboardEvent,
     ) {
       if (event.key === "Escape") {
@@ -181,42 +165,45 @@ export default function Navbar() {
 
     window.addEventListener(
       "keydown",
-      handleEscapeKey,
+      handleEscape,
     );
 
     return () => {
       window.removeEventListener(
         "keydown",
-        handleEscapeKey,
+        handleEscape,
       );
     };
   }, []);
 
   useEffect(() => {
-    function handleScroll() {
-      setIsScrolled(window.scrollY > 18);
+    const desktopMedia = window.matchMedia(
+      "(min-width: 1024px)",
+    );
+
+    function handleDesktopChange(
+      event: MediaQueryListEvent,
+    ) {
+      if (event.matches) {
+        setIsMenuOpen(false);
+      }
     }
 
-    handleScroll();
-
-    window.addEventListener(
-      "scroll",
-      handleScroll,
-      {
-        passive: true,
-      },
+    desktopMedia.addEventListener(
+      "change",
+      handleDesktopChange,
     );
 
     return () => {
-      window.removeEventListener(
-        "scroll",
-        handleScroll,
+      desktopMedia.removeEventListener(
+        "change",
+        handleDesktopChange,
       );
     };
   }, []);
 
   useEffect(() => {
-    const observedSections =
+    const sections =
       navigationLinks.flatMap(
         (link, index) => {
           const section =
@@ -239,7 +226,7 @@ export default function Navbar() {
 
     const observer = new IntersectionObserver(
       (entries) => {
-        const visibleEntries = entries
+        const visibleSection = entries
           .filter(
             (entry) => entry.isIntersecting,
           )
@@ -247,28 +234,27 @@ export default function Navbar() {
             (first, second) =>
               second.intersectionRatio -
               first.intersectionRatio,
-          );
+          )[0];
 
-        const mostVisible =
-          visibleEntries[0];
-
-        if (!mostVisible) {
+        if (!visibleSection) {
           return;
         }
 
-        const index =
-          navigationLinks.findIndex(
-            (link) =>
-              link.href ===
-              `#${mostVisible.target.id}`,
+        const matchingSection =
+          sections.find(
+            ({ section }) =>
+              section ===
+              visibleSection.target,
           );
 
-        if (index >= 0) {
-          setActiveIndex(index);
+        if (matchingSection) {
+          setActiveIndex(
+            matchingSection.index,
+          );
         }
       },
       {
-        rootMargin: "-22% 0px -62% 0px",
+        rootMargin: "-20% 0px -65% 0px",
         threshold: [
           0.05,
           0.15,
@@ -278,11 +264,9 @@ export default function Navbar() {
       },
     );
 
-    observedSections.forEach(
-      ({ section }) => {
-        observer.observe(section);
-      },
-    );
+    sections.forEach(({ section }) => {
+      observer.observe(section);
+    });
 
     return () => {
       observer.disconnect();
@@ -298,145 +282,47 @@ export default function Navbar() {
   ) {
     setActiveIndex(index);
     setHoveredIndex(null);
-    setIsMenuOpen(false);
+    closeMenu();
   }
 
-  function handlePointerMove(
-    event: PointerEvent<HTMLDivElement>,
-  ) {
-    const element = navbarRef.current;
-
-    if (!element) {
-      return;
-    }
-
-    const bounds =
-      element.getBoundingClientRect();
-
-    if (
-      bounds.width === 0 ||
-      bounds.height === 0
-    ) {
-      return;
-    }
-
-    const x =
-      ((event.clientX - bounds.left) /
-        bounds.width) *
-      100;
-
-    const y =
-      ((event.clientY - bounds.top) /
-        bounds.height) *
-      100;
-
-    const normalizedX =
-      (x - 50) / 50;
-
-    const normalizedY =
-      (y - 50) / 50;
-
-    element.style.setProperty(
-      "--glass-x",
-      `${x}%`,
-    );
-
-    element.style.setProperty(
-      "--glass-y",
-      `${y}%`,
-    );
-
-    element.style.setProperty(
-      "--glass-shift-x",
-      `${normalizedX * 10}px`,
-    );
-
-    element.style.setProperty(
-      "--glass-shift-y",
-      `${normalizedY * 5}px`,
-    );
-
-    element.style.setProperty(
-      "--glass-rotate-x",
-      `${normalizedY * -0.75}deg`,
-    );
-
-    element.style.setProperty(
-      "--glass-rotate-y",
-      `${normalizedX * 0.75}deg`,
-    );
-  }
+  const navigationStyle = {
+    "--navigation-index": indicatorIndex,
+    "--navigation-count":
+      navigationLinks.length,
+  } as CSSProperties;
 
   return (
-    <header className="site-navbar fixed left-0 top-0 z-[100] w-full px-3 pt-3 sm:px-5 sm:pt-4 lg:px-7 lg:pt-5">
-      <div
-        ref={navbarRef}
-        onPointerMove={handlePointerMove}
-        onPointerLeave={resetPointerEffect}
-        className={`liquid-navbar relative z-[120] mx-auto flex h-[64px] w-full max-w-[1760px] items-center justify-between px-4 sm:h-[72px] sm:px-5 lg:h-[78px] lg:px-6 ${
-          isScrolled
-            ? "liquid-navbar-scrolled"
-            : ""
-        }`}
-      >
-        <span
-          aria-hidden="true"
-          className="liquid-navbar-base"
-        />
-
-        <span
-          aria-hidden="true"
-          className="liquid-navbar-refraction"
-        />
-
-        <span
-          aria-hidden="true"
-          className="liquid-navbar-spectrum"
-        />
-
-        <span
-          aria-hidden="true"
-          className="liquid-navbar-caustic"
-        />
-
-        <span
-          aria-hidden="true"
-          className="liquid-navbar-shine"
-        />
-
+    <header className="simple-site-header">
+      <div className="simple-navbar">
         <Link
           href="/"
           onClick={closeMenu}
-          className="navbar-logo relative z-10 flex shrink-0 items-center"
+          className="simple-brand"
+          aria-label="GYM House homepage"
         >
-          <span className="text-[clamp(17px,1.25vw,23px)] font-black uppercase tracking-[-0.065em] text-white">
-            GYM
-          </span>
+          <LogoMark />
 
-          <span className="ml-1.5 text-[clamp(17px,1.25vw,23px)] font-black uppercase tracking-[-0.065em] text-[#baff00]">
-            House
+          <span className="simple-brand-name">
+            <span>GYM</span>
+
+            <span className="simple-brand-accent">
+              House
+            </span>
           </span>
         </Link>
 
         <nav
           aria-label="Main navigation"
+          className="simple-desktop-navigation"
+          style={navigationStyle}
           onMouseLeave={() => {
             setHoveredIndex(null);
           }}
-          className="desktop-nav-shell absolute left-1/2 hidden -translate-x-1/2 md:grid"
         >
           <span
             aria-hidden="true"
-            className="desktop-nav-liquid-indicator"
-            style={{
-              transform: `translate3d(${
-                indicatorIndex * 100
-              }%, 0, 0)`,
-            }}
-          >
-            <span className="desktop-indicator-reflection" />
-            <span className="desktop-indicator-spectrum" />
-          </span>
+            className="simple-navigation-indicator"
+          />
 
           {navigationLinks.map(
             (link, index) => {
@@ -464,15 +350,13 @@ export default function Navbar() {
                   onClick={() => {
                     selectNavigation(index);
                   }}
-                  className={`desktop-nav-link ${
+                  className={`simple-navigation-link ${
                     isHighlighted
-                      ? "desktop-nav-link-active"
+                      ? "is-highlighted"
                       : ""
                   }`}
                 >
-                  <span className="relative z-10">
-                    {link.label}
-                  </span>
+                  {link.label}
                 </Link>
               );
             },
@@ -481,23 +365,10 @@ export default function Navbar() {
 
         <Link
           href="/login"
-          className="liquid-login-button relative z-10 hidden md:flex"
+          className="simple-navbar-cta"
         >
-          <span
-            aria-hidden="true"
-            className="liquid-login-reflection"
-          />
-
-          <span className="relative z-10">
-            Login
-          </span>
-
-          <span
-            aria-hidden="true"
-            className="liquid-login-icon"
-          >
-            <ArrowIcon />
-          </span>
+          <span>Login</span>
+          <ArrowIcon />
         </Link>
 
         <button
@@ -508,41 +379,17 @@ export default function Navbar() {
               : "Open navigation menu"
           }
           aria-expanded={isMenuOpen}
-          aria-controls="mobile-navigation"
+          aria-controls="simple-mobile-navigation"
           onClick={() => {
             setIsMenuOpen(
               (current) => !current,
             );
           }}
-          className="liquid-menu-button relative z-10 flex h-10 w-10 items-center justify-center md:hidden"
+          className={`simple-menu-button ${
+            isMenuOpen ? "is-open" : ""
+          }`}
         >
-          <span className="liquid-menu-reflection" />
-
-          <span className="relative block h-4 w-6">
-            <span
-              className={`absolute left-0 h-[1.5px] rounded-full bg-white transition-all duration-300 ${
-                isMenuOpen
-                  ? "top-[7px] w-6 rotate-45"
-                  : "top-0 w-6"
-              }`}
-            />
-
-            <span
-              className={`absolute left-0 top-[7px] h-[1.5px] rounded-full bg-white transition-all duration-300 ${
-                isMenuOpen
-                  ? "w-0 opacity-0"
-                  : "w-4 opacity-100"
-              }`}
-            />
-
-            <span
-              className={`absolute left-0 h-[1.5px] rounded-full bg-white transition-all duration-300 ${
-                isMenuOpen
-                  ? "top-[7px] w-6 -rotate-45"
-                  : "top-[14px] w-6"
-              }`}
-            />
-          </span>
+          <MenuIcon isOpen={isMenuOpen} />
         </button>
       </div>
 
@@ -552,72 +399,85 @@ export default function Navbar() {
         aria-hidden={!isMenuOpen}
         tabIndex={isMenuOpen ? 0 : -1}
         onClick={closeMenu}
-        className={`fixed inset-0 z-[100] bg-black/60 backdrop-blur-[6px] transition-all duration-300 md:hidden ${
-          isMenuOpen
-            ? "visible opacity-100"
-            : "invisible opacity-0"
+        className={`simple-mobile-overlay ${
+          isMenuOpen ? "is-visible" : ""
         }`}
       />
 
       <div
-        id="mobile-navigation"
+        id="simple-mobile-navigation"
         aria-hidden={!isMenuOpen}
-        className={`liquid-mobile-menu fixed left-3 right-3 top-[84px] z-[110] overflow-hidden sm:left-5 sm:right-5 sm:top-[96px] md:hidden ${
-          isMenuOpen
-            ? "visible translate-y-0 scale-100 opacity-100"
-            : "invisible -translate-y-3 scale-[0.985] opacity-0"
+        className={`simple-mobile-navigation ${
+          isMenuOpen ? "is-open" : ""
         }`}
       >
-        <span
-          aria-hidden="true"
-          className="liquid-mobile-spectrum"
-        />
+        <div className="simple-mobile-menu-header">
+          <span>Navigation</span>
 
-        <span
-          aria-hidden="true"
-          className="liquid-mobile-shine"
-        />
+          <span className="simple-mobile-menu-count">
+            0{navigationLinks.length}
+          </span>
+        </div>
 
-        <nav className="relative z-10 flex w-full flex-col px-5 pb-6 pt-2">
+        <nav
+          aria-label="Mobile navigation"
+          className="simple-mobile-links"
+        >
           {navigationLinks.map(
-            (link, index) => (
-              <Link
-                key={link.label}
-                href={link.href}
-                tabIndex={
-                  isMenuOpen ? 0 : -1
-                }
-                onClick={() => {
-                  selectNavigation(index);
-                }}
-                className="mobile-navigation-link group flex min-h-[58px] items-center justify-between border-b border-white/[0.07] text-[15px] font-semibold text-white/70 transition-colors duration-200 hover:text-white"
-              >
-                <span>{link.label}</span>
+            (link, index) => {
+              const isActive =
+                activeIndex === index;
 
-                <span
-                  className={`h-1.5 w-1.5 rounded-full transition-all duration-300 ${
-                    activeIndex === index
-                      ? "scale-100 bg-[#baff00]"
-                      : "scale-75 bg-white/15 group-hover:scale-100 group-hover:bg-[#baff00]"
+              return (
+                <Link
+                  key={link.label}
+                  href={link.href}
+                  tabIndex={
+                    isMenuOpen ? 0 : -1
+                  }
+                  aria-current={
+                    isActive
+                      ? "page"
+                      : undefined
+                  }
+                  onClick={() => {
+                    selectNavigation(index);
+                  }}
+                  className={`simple-mobile-link ${
+                    isActive
+                      ? "is-active"
+                      : ""
                   }`}
-                />
-              </Link>
-            ),
+                >
+                  <span className="simple-mobile-link-number">
+                    0{index + 1}
+                  </span>
+
+                  <span className="simple-mobile-link-label">
+                    {link.label}
+                  </span>
+
+                  <span className="simple-mobile-link-arrow">
+                    <ArrowIcon />
+                  </span>
+                </Link>
+              );
+            },
           )}
-
-          <Link
-            href="/login"
-            tabIndex={isMenuOpen ? 0 : -1}
-            onClick={closeMenu}
-            className="mobile-login-button relative mt-5 flex min-h-[52px] w-full items-center justify-center overflow-hidden rounded-full px-6 text-sm font-black text-black transition-transform duration-200 active:scale-[0.98]"
-          >
-            <span className="mobile-login-reflection" />
-
-            <span className="relative z-10">
-              Login
-            </span>
-          </Link>
         </nav>
+
+        <Link
+  href="/login"
+  tabIndex={isMenuOpen ? 0 : -1}
+  onClick={closeMenu}
+  className="simple-mobile-cta"
+>
+  <span>Login</span>
+
+  <span className="simple-mobile-cta-icon">
+    <ArrowIcon />
+  </span>
+</Link>
       </div>
     </header>
   );
