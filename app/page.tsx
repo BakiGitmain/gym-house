@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-
+import ExperienceSection from "@/components/home/experience";
 import FeaturesSection from "@/components/home/features";
 import ProgramsSection from "@/components/home/programs";
 import Navbar from "@/components/layout/navbar";
@@ -253,6 +253,7 @@ export default function HomePage() {
 <TrainingCoursesSection />
 
 <ProgramsSection />
+<ExperienceSection />
       </main>
     </>
   );
