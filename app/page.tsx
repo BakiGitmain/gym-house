@@ -7,6 +7,8 @@ import Navbar from "@/components/layout/navbar";
 import TrainingCoursesSection from "@/components/home/training-courses";
 import TrainersSection from "@/components/home/trainers";
 import TestimonialsSection from "@/components/home/testimonials";
+import MembershipSection from "@/components/home/membership";
+import Footer from "@/components/layout/footer";
 function ArrowIcon() {
   return (
     <svg
@@ -258,7 +260,9 @@ export default function HomePage() {
 <ExperienceSection />
 <TrainersSection />
 <TestimonialsSection />
+<MembershipSection />
       </main>
+       <Footer />
     </>
   );
 }
