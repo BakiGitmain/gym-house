@@ -4,10 +4,14 @@ import Link from "next/link";
 import { useLenis } from "lenis/react";
 import {
   useEffect,
+  useRef,
   useState,
   type CSSProperties,
   type MouseEvent,
 } from "react";
+
+import { useLanguage } from "@/components/providers/language-provider";
+import type { Language } from "@/lib/translations";
 
 const navigationLinks = [
   {
@@ -108,6 +112,67 @@ function ArrowIcon() {
   );
 }
 
+function GlobeIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden="true"
+      className="simple-language-globe"
+    >
+      <circle
+        cx="12"
+        cy="12"
+        r="8.7"
+        stroke="currentColor"
+        strokeWidth="1.7"
+      />
+
+      <path
+        d="M3.8 12H20.2"
+        stroke="currentColor"
+        strokeWidth="1.7"
+        strokeLinecap="round"
+      />
+
+      <path
+        d="M12 3.3C14.2 5.65 15.4 8.65 15.4 12C15.4 15.35 14.2 18.35 12 20.7"
+        stroke="currentColor"
+        strokeWidth="1.7"
+        strokeLinecap="round"
+      />
+
+      <path
+        d="M12 3.3C9.8 5.65 8.6 8.65 8.6 12C8.6 15.35 9.8 18.35 12 20.7"
+        stroke="currentColor"
+        strokeWidth="1.7"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+function SmallCheckIcon() {
+  return (
+    <svg
+      viewBox="0 0 20 20"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden="true"
+      className="simple-language-check"
+    >
+      <path
+        d="M4.5 10.2L8.1 13.7L15.6 6.4"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
 function MenuIcon({
   isOpen,
 }: {
@@ -127,8 +192,199 @@ function MenuIcon({
   );
 }
 
+type LanguageChooserProps = {
+  menuId: string;
+};
+
+function LanguageChooser({
+  menuId,
+}: LanguageChooserProps) {
+  const { language, setLanguage } =
+    useLanguage();
+
+  const [isOpen, setIsOpen] =
+    useState(false);
+
+  const chooserRef =
+    useRef<HTMLDivElement>(null);
+
+  const currentLanguage =
+    language ?? "en";
+
+  const isAmharic =
+    currentLanguage === "am";
+
+  useEffect(() => {
+    function handleOutsideClick(
+      event: PointerEvent,
+    ) {
+      if (
+        chooserRef.current &&
+        !chooserRef.current.contains(
+          event.target as Node,
+        )
+      ) {
+        setIsOpen(false);
+      }
+    }
+
+    function handleEscape(
+      event: KeyboardEvent,
+    ) {
+      if (event.key === "Escape") {
+        setIsOpen(false);
+      }
+    }
+
+    document.addEventListener(
+      "pointerdown",
+      handleOutsideClick,
+    );
+
+    document.addEventListener(
+      "keydown",
+      handleEscape,
+    );
+
+    return () => {
+      document.removeEventListener(
+        "pointerdown",
+        handleOutsideClick,
+      );
+
+      document.removeEventListener(
+        "keydown",
+        handleEscape,
+      );
+    };
+  }, []);
+
+  function selectLanguage(
+    selectedLanguage: Language,
+  ) {
+    setLanguage(selectedLanguage);
+    setIsOpen(false);
+  }
+
+  return (
+    <div
+      ref={chooserRef}
+      className="simple-language-chooser"
+      data-no-translate="true"
+    >
+      <button
+        type="button"
+        className={`simple-language-trigger ${
+          isOpen ? "is-open" : ""
+        }`}
+        aria-label={
+          isAmharic
+            ? "ቋንቋ ይምረጡ"
+            : "Choose language"
+        }
+        aria-expanded={isOpen}
+        aria-controls={menuId}
+        onClick={() => {
+          setIsOpen(
+            (currentValue) =>
+              !currentValue,
+          );
+        }}
+      >
+        <span className="simple-language-trigger-icon">
+          <GlobeIcon />
+        </span>
+
+        <span className="simple-language-current">
+          {isAmharic ? "EN" : "አማ"}
+        </span>
+
+        <span
+          className="simple-language-status"
+          aria-hidden="true"
+        />
+      </button>
+
+      <div
+        id={menuId}
+        className={`simple-language-menu ${
+          isOpen ? "is-open" : ""
+        }`}
+        aria-hidden={!isOpen}
+      >
+        <div className="simple-language-menu-heading">
+          <span>
+            {isAmharic
+              ? "ቋንቋ ይምረጡ"
+              : "Choose language"}
+          </span>
+
+          <GlobeIcon />
+        </div>
+
+        <button
+          type="button"
+          className={`simple-language-option ${
+            currentLanguage === "en"
+              ? "is-selected"
+              : ""
+          }`}
+          tabIndex={isOpen ? 0 : -1}
+          onClick={() => {
+            selectLanguage("en");
+          }}
+        >
+          <span className="simple-language-option-code">
+            EN
+          </span>
+
+          <span className="simple-language-option-copy">
+            <strong>English</strong>
+            <small>English</small>
+          </span>
+
+          <span className="simple-language-option-check">
+            {currentLanguage === "en" && (
+              <SmallCheckIcon />
+            )}
+          </span>
+        </button>
+
+        <button
+          type="button"
+          className={`simple-language-option ${
+            currentLanguage === "am"
+              ? "is-selected"
+              : ""
+          }`}
+          tabIndex={isOpen ? 0 : -1}
+          onClick={() => {
+            selectLanguage("am");
+          }}
+        >
+          <span className="simple-language-option-code">
+            አማ
+          </span>
+
+          <span className="simple-language-option-copy">
+            <strong>አማርኛ</strong>
+            <small>Amharic</small>
+          </span>
+
+          <span className="simple-language-option-check">
+            {currentLanguage === "am" && (
+              <SmallCheckIcon />
+            )}
+          </span>
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export default function Navbar() {
   const lenis = useLenis();
+
   const [isMenuOpen, setIsMenuOpen] =
     useState(false);
 
@@ -149,7 +405,8 @@ export default function Navbar() {
     const previousOverflow =
       document.body.style.overflow;
 
-    document.body.style.overflow = "hidden";
+    document.body.style.overflow =
+      "hidden";
 
     return () => {
       document.body.style.overflow =
@@ -180,9 +437,10 @@ export default function Navbar() {
   }, []);
 
   useEffect(() => {
-    const desktopMedia = window.matchMedia(
-      "(min-width: 1024px)",
-    );
+    const desktopMedia =
+      window.matchMedia(
+        "(min-width: 1024px)",
+      );
 
     function handleDesktopChange(
       event: MediaQueryListEvent,
@@ -227,45 +485,48 @@ export default function Navbar() {
         },
       );
 
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const visibleSection = entries
-          .filter(
-            (entry) => entry.isIntersecting,
-          )
-          .sort(
-            (first, second) =>
-              second.intersectionRatio -
-              first.intersectionRatio,
-          )[0];
+    const observer =
+      new IntersectionObserver(
+        (entries) => {
+          const visibleSection = entries
+            .filter(
+              (entry) =>
+                entry.isIntersecting,
+            )
+            .sort(
+              (first, second) =>
+                second.intersectionRatio -
+                first.intersectionRatio,
+            )[0];
 
-        if (!visibleSection) {
-          return;
-        }
+          if (!visibleSection) {
+            return;
+          }
 
-        const matchingSection =
-          sections.find(
-            ({ section }) =>
-              section ===
-              visibleSection.target,
-          );
+          const matchingSection =
+            sections.find(
+              ({ section }) =>
+                section ===
+                visibleSection.target,
+            );
 
-        if (matchingSection) {
-          setActiveIndex(
-            matchingSection.index,
-          );
-        }
-      },
-      {
-        rootMargin: "-20% 0px -65% 0px",
-        threshold: [
-          0.05,
-          0.15,
-          0.3,
-          0.5,
-        ],
-      },
-    );
+          if (matchingSection) {
+            setActiveIndex(
+              matchingSection.index,
+            );
+          }
+        },
+        {
+          rootMargin:
+            "-20% 0px -65% 0px",
+          threshold: [
+            0.05,
+            0.15,
+            0.3,
+            0.5,
+          ],
+        },
+      );
 
     sections.forEach(({ section }) => {
       observer.observe(section);
@@ -280,31 +541,59 @@ export default function Navbar() {
     setIsMenuOpen(false);
   }
 
-function selectNavigation(
-  event: MouseEvent<HTMLAnchorElement>,
-  index: number,
-  href: string,
-) {
-  event.preventDefault();
+  function selectNavigation(
+    event: MouseEvent<HTMLAnchorElement>,
+    index: number,
+    href: string,
+  ) {
+    event.preventDefault();
 
-  setActiveIndex(index);
-  setHoveredIndex(null);
-  closeMenu();
+    setActiveIndex(index);
+    setHoveredIndex(null);
+    closeMenu();
 
-  /*
-   * Home always scrolls to the absolute beginning.
-   * This also removes the previous section hash
-   * from the browser URL.
-   */
-  if (href === "#home") {
+    if (href === "#home") {
+      window.history.replaceState(
+        null,
+        "",
+        `${window.location.pathname}${window.location.search}`,
+      );
+
+      if (lenis) {
+        lenis.scrollTo(0, {
+          duration: 1.15,
+          force: true,
+        });
+
+        return;
+      }
+
+      window.scrollTo({
+        top: 0,
+        behavior: "smooth",
+      });
+
+      return;
+    }
+
+    const target =
+      document.querySelector<HTMLElement>(
+        href,
+      );
+
+    if (!target) {
+      return;
+    }
+
     window.history.replaceState(
       null,
       "",
-      `${window.location.pathname}${window.location.search}`,
+      href,
     );
 
     if (lenis) {
-      lenis.scrollTo(0, {
+      lenis.scrollTo(target, {
+        offset: -110,
         duration: 1.15,
         force: true,
       });
@@ -312,50 +601,21 @@ function selectNavigation(
       return;
     }
 
+    const targetPosition =
+      target.getBoundingClientRect().top +
+      window.scrollY -
+      110;
+
     window.scrollTo({
-      top: 0,
+      top: targetPosition,
       behavior: "smooth",
     });
-
-    return;
   }
-
-  const target =
-    document.querySelector<HTMLElement>(href);
-
-  if (!target) {
-    return;
-  }
-
-  window.history.replaceState(
-    null,
-    "",
-    href,
-  );
-
-  if (lenis) {
-    lenis.scrollTo(target, {
-      offset: -110,
-      duration: 1.15,
-      force: true,
-    });
-
-    return;
-  }
-
-  const targetPosition =
-    target.getBoundingClientRect().top +
-    window.scrollY -
-    110;
-
-  window.scrollTo({
-    top: targetPosition,
-    behavior: "smooth",
-  });
-}
 
   const navigationStyle = {
-    "--navigation-index": indicatorIndex,
+    "--navigation-index":
+      indicatorIndex,
+
     "--navigation-count":
       navigationLinks.length,
   } as CSSProperties;
@@ -363,18 +623,18 @@ function selectNavigation(
   return (
     <header className="simple-site-header">
       <div className="simple-navbar">
-<Link
-  href="#home"
-  onClick={(event) => {
-    selectNavigation(
-      event,
-      0,
-      "#home",
-    );
-  }}
-  className="simple-brand"
-  aria-label="Return to the beginning of the homepage"
->
+        <Link
+          href="#home"
+          onClick={(event) => {
+            selectNavigation(
+              event,
+              0,
+              "#home",
+            );
+          }}
+          className="simple-brand"
+          aria-label="Return to the beginning of the homepage"
+        >
           <LogoMark />
 
           <span className="simple-brand-name">
@@ -386,61 +646,69 @@ function selectNavigation(
           </span>
         </Link>
 
-        <nav
-          aria-label="Main navigation"
-          className="simple-desktop-navigation"
-          style={navigationStyle}
-          onMouseLeave={() => {
-            setHoveredIndex(null);
-          }}
-        >
-          <span
-            aria-hidden="true"
-            className="simple-navigation-indicator"
-          />
+        <div className="simple-navbar-center">
+          <nav
+            aria-label="Main navigation"
+            className="simple-desktop-navigation"
+            style={navigationStyle}
+            onMouseLeave={() => {
+              setHoveredIndex(null);
+            }}
+          >
+            <span
+              aria-hidden="true"
+              className="simple-navigation-indicator"
+            />
 
-          {navigationLinks.map(
-            (link, index) => {
-              const isHighlighted =
-                indicatorIndex === index;
+            {navigationLinks.map(
+              (link, index) => {
+                const isHighlighted =
+                  indicatorIndex === index;
 
-              return (
-                <Link
-                  key={link.label}
-                  href={link.href}
-                  aria-current={
-                    activeIndex === index
-                      ? "page"
-                      : undefined
-                  }
-                  onMouseEnter={() => {
-                    setHoveredIndex(index);
-                  }}
-                  onFocus={() => {
-                    setHoveredIndex(index);
-                  }}
-                  onBlur={() => {
-                    setHoveredIndex(null);
-                  }}
-                onClick={(event) => {
-                  selectNavigation(
-                    event,
-                    index,
-                    link.href,
-                  );
-                }}
-                  className={`simple-navigation-link ${
-                    isHighlighted
-                      ? "is-highlighted"
-                      : ""
-                  }`}
-                >
-                  {link.label}
-                </Link>
-              );
-            },
-          )}
-        </nav>
+                return (
+                  <Link
+                    key={link.label}
+                    href={link.href}
+                    aria-current={
+                      activeIndex === index
+                        ? "page"
+                        : undefined
+                    }
+                    onMouseEnter={() => {
+                      setHoveredIndex(
+                        index,
+                      );
+                    }}
+                    onFocus={() => {
+                      setHoveredIndex(
+                        index,
+                      );
+                    }}
+                    onBlur={() => {
+                      setHoveredIndex(null);
+                    }}
+                    onClick={(event) => {
+                      selectNavigation(
+                        event,
+                        index,
+                        link.href,
+                      );
+                    }}
+                    className={`simple-navigation-link ${
+                      isHighlighted
+                        ? "is-highlighted"
+                        : ""
+                    }`}
+                  >
+                    {link.label}
+                  </Link>
+                );
+              },
+            )}
+          </nav>
+
+          <LanguageChooser menuId="desktop-language-menu" />
+        </div>
 
         <Link
           href="/login"
@@ -450,36 +718,48 @@ function selectNavigation(
           <ArrowIcon />
         </Link>
 
-        <button
-          type="button"
-          aria-label={
-            isMenuOpen
-              ? "Close navigation menu"
-              : "Open navigation menu"
-          }
-          aria-expanded={isMenuOpen}
-          aria-controls="simple-mobile-navigation"
-          onClick={() => {
-            setIsMenuOpen(
-              (current) => !current,
-            );
-          }}
-          className={`simple-menu-button ${
-            isMenuOpen ? "is-open" : ""
-          }`}
-        >
-          <MenuIcon isOpen={isMenuOpen} />
-        </button>
+        <div className="simple-mobile-navbar-actions">
+          <LanguageChooser menuId="mobile-language-menu" />
+
+          <button
+            type="button"
+            aria-label={
+              isMenuOpen
+                ? "Close navigation menu"
+                : "Open navigation menu"
+            }
+            aria-expanded={isMenuOpen}
+            aria-controls="simple-mobile-navigation"
+            onClick={() => {
+              setIsMenuOpen(
+                (current) => !current,
+              );
+            }}
+            className={`simple-menu-button ${
+              isMenuOpen
+                ? "is-open"
+                : ""
+            }`}
+          >
+            <MenuIcon
+              isOpen={isMenuOpen}
+            />
+          </button>
+        </div>
       </div>
 
       <button
         type="button"
         aria-label="Close navigation menu"
         aria-hidden={!isMenuOpen}
-        tabIndex={isMenuOpen ? 0 : -1}
+        tabIndex={
+          isMenuOpen ? 0 : -1
+        }
         onClick={closeMenu}
         className={`simple-mobile-overlay ${
-          isMenuOpen ? "is-visible" : ""
+          isMenuOpen
+            ? "is-visible"
+            : ""
         }`}
       />
 
@@ -550,17 +830,19 @@ function selectNavigation(
         </nav>
 
         <Link
-  href="/login"
-  tabIndex={isMenuOpen ? 0 : -1}
-  onClick={closeMenu}
-  className="simple-mobile-cta"
->
-  <span>Login</span>
+          href="/login"
+          tabIndex={
+            isMenuOpen ? 0 : -1
+          }
+          onClick={closeMenu}
+          className="simple-mobile-cta"
+        >
+          <span>Login</span>
 
-  <span className="simple-mobile-cta-icon">
-    <ArrowIcon />
-  </span>
-</Link>
+          <span className="simple-mobile-cta-icon">
+            <ArrowIcon />
+          </span>
+        </Link>
       </div>
     </header>
   );

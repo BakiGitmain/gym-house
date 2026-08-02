@@ -1,14 +1,27 @@
 import type { Metadata } from "next";
-import { Geist } from "next/font/google";
+import {
+  Geist,
+  Noto_Sans_Ethiopic,
+} from "next/font/google";
 
+import LanguageGate from "@/components/layout/language-gate";
 import SmoothScroll from "@/components/layout/smooth-scroll";
 import WebsiteLoader from "@/components/layout/website-loader";
+import LanguageProvider from "@/components/providers/language-provider";
+import SiteTranslator from "@/components/providers/site-translator";
 
 import "./globals.css";
 
 const geist = Geist({
   subsets: ["latin"],
+  variable: "--font-geist",
 });
+
+const notoSansEthiopic =
+  Noto_Sans_Ethiopic({
+    subsets: ["ethiopic"],
+    variable: "--font-ethiopic",
+  });
 
 export const metadata: Metadata = {
   title: "GYM House",
@@ -22,15 +35,24 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html
+      lang="en"
+      suppressHydrationWarning
+    >
       <body
-        className={`${geist.className} bg-[#080908]`}
+        className={`${geist.variable} ${notoSansEthiopic.variable} bg-[#080908]`}
       >
-        <WebsiteLoader />
+        <LanguageProvider>
+          <LanguageGate>
+            <SiteTranslator />
 
-        <SmoothScroll>
-          {children}
-        </SmoothScroll>
+            <WebsiteLoader />
+
+            <SmoothScroll>
+              {children}
+            </SmoothScroll>
+          </LanguageGate>
+        </LanguageProvider>
       </body>
     </html>
   );
