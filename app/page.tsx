@@ -4,7 +4,7 @@ import Link from "next/link";
 import FeaturesSection from "@/components/home/features";
 import ProgramsSection from "@/components/home/programs";
 import Navbar from "@/components/layout/navbar";
-
+import TrainingCoursesSection from "@/components/home/training-courses";
 function ArrowIcon() {
   return (
     <svg
@@ -248,7 +248,9 @@ export default function HomePage() {
           </div>
         </section>
 
-        <FeaturesSection />
+<FeaturesSection />
+
+<TrainingCoursesSection />
 
 <ProgramsSection />
       </main>

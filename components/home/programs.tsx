@@ -1,3 +1,5 @@
+import Image from "next/image";
+
 import ScrollStack, {
   ScrollStackItem,
 } from "@/components/ui/scroll-stack";
@@ -15,6 +17,8 @@ type Program = {
   icon: ProgramIconName;
   duration: string;
   level: string;
+  image: string;
+  imagePosition: string;
 };
 
 const programs: Program[] = [
@@ -26,6 +30,9 @@ const programs: Program[] = [
     icon: "cardio",
     duration: "45–60 min",
     level: "All levels",
+    image:
+      "/images/programs/cardio-training.jpg",
+    imagePosition: "10% center",
   },
   {
     number: "02",
@@ -35,6 +42,9 @@ const programs: Program[] = [
     icon: "strength",
     duration: "50–75 min",
     level: "Beginner to advanced",
+    image:
+      "/images/programs/strength-build.jpg",
+    imagePosition: "68% center",
   },
   {
     number: "03",
@@ -44,6 +54,8 @@ const programs: Program[] = [
     icon: "fat-loss",
     duration: "40–60 min",
     level: "All levels",
+    image: "/images/programs/fat-loss.jpg",
+    imagePosition: "70% center",
   },
   {
     number: "04",
@@ -53,6 +65,9 @@ const programs: Program[] = [
     icon: "hiit",
     duration: "20–40 min",
     level: "Intermediate",
+    image:
+      "/images/programs/hiit-workoutsv2.jpg",
+    imagePosition: "30% center",
   },
 ];
 
@@ -192,18 +207,79 @@ function ProgramIcon({
   );
 }
 
+function ProgramBackground({
+  program,
+}: {
+  program: Program;
+}) {
+  return (
+    <div
+      aria-hidden="true"
+      className="pointer-events-none absolute inset-0 overflow-hidden"
+    >
+      <div className="absolute inset-0 lg:left-[38%]">
+        <Image
+          src={program.image}
+          alt=""
+          fill
+          sizes="(max-width: 1023px) 100vw, 720px"
+          className="object-cover grayscale opacity-[0.34] brightness-75 contrast-125 transition-transform duration-700 ease-out group-hover:scale-[1.025] sm:opacity-[0.4] lg:opacity-[0.58]"
+          style={{
+            objectPosition:
+              program.imagePosition,
+          }}
+        />
+      </div>
+
+      <div
+        className="absolute inset-0 lg:hidden"
+        style={{
+          background:
+            "linear-gradient(180deg, rgba(17,19,15,0.2) 0%, rgba(17,19,15,0.48) 32%, rgba(17,19,15,0.88) 70%, #11130f 100%)",
+        }}
+      />
+
+      <div
+        className="absolute inset-0 hidden lg:block"
+        style={{
+          background:
+            "linear-gradient(90deg, #11130f 0%, #11130f 30%, rgba(17,19,15,0.96) 43%, rgba(17,19,15,0.68) 62%, rgba(17,19,15,0.24) 82%, rgba(17,19,15,0.5) 100%)",
+        }}
+      />
+
+      <div
+        className="absolute inset-0"
+        style={{
+          background:
+            "linear-gradient(180deg, rgba(255,255,255,0.025) 0%, transparent 24%, transparent 72%, rgba(0,0,0,0.32) 100%)",
+        }}
+      />
+
+      <div
+        className="absolute inset-0 opacity-70"
+        style={{
+          background:
+            "radial-gradient(circle at 84% 30%, rgba(183,239,0,0.12) 0%, rgba(183,239,0,0.035) 26%, transparent 54%)",
+        }}
+      />
+    </div>
+  );
+}
+
 function ProgramCard({
   program,
 }: {
   program: Program;
 }) {
   return (
-    <article className="group relative min-h-[390px] overflow-hidden rounded-[28px] border border-white/10 bg-[#11130f] px-6 py-7 shadow-[0_18px_45px_rgba(0,0,0,0.42)] sm:min-h-[430px] sm:rounded-[34px] sm:px-9 sm:py-9 lg:min-h-[460px] lg:px-12 lg:py-11">
+    <article className="group relative min-h-[470px] overflow-hidden rounded-[28px] border border-white/10 bg-[#11130f] px-6 py-7 shadow-[0_18px_45px_rgba(0,0,0,0.42)] sm:min-h-[490px] sm:rounded-[34px] sm:px-9 sm:py-9 lg:min-h-[500px] lg:px-12 lg:py-11">
+      <ProgramBackground program={program} />
+
       <div
         className="pointer-events-none absolute inset-0"
         style={{
           background:
-            "radial-gradient(circle at 80% 15%, rgba(183,239,0,0.11), transparent 32%), linear-gradient(125deg, rgba(255,255,255,0.035), transparent 42%)",
+            "linear-gradient(125deg, rgba(255,255,255,0.035), transparent 42%)",
         }}
       />
 
@@ -213,27 +289,27 @@ function ProgramCard({
 
       <div className="pointer-events-none absolute -bottom-16 -right-6 h-40 w-40 rounded-full border border-[#b7ef00]/10" />
 
-      <div className="relative z-10 flex min-h-[334px] flex-col sm:min-h-[358px] lg:min-h-[370px]">
+      <div className="relative z-10 flex min-h-[414px] flex-col sm:min-h-[418px] lg:min-h-[410px]">
         <div className="flex items-start justify-between gap-5">
-          <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full border border-[#b7ef00]/25 bg-[#080908] text-[#b7ef00] sm:h-16 sm:w-16">
+          <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full border border-[#b7ef00]/25 bg-[#080908]/90 text-[#b7ef00] shadow-[0_10px_30px_rgba(0,0,0,0.25)] sm:h-16 sm:w-16">
             <ProgramIcon name={program.icon} />
           </span>
 
-          <span className="text-[12px] font-black tracking-[0.24em] text-white/25 sm:text-sm">
+          <span className="text-[12px] font-black tracking-[0.24em] text-white/30 sm:text-sm">
             {program.number}
           </span>
         </div>
 
-        <div className="mt-9 max-w-[780px] sm:mt-11">
+        <div className="mt-12 sm:mt-14 lg:mt-16 lg:max-w-[58%]">
           <p className="mb-3 text-[10px] font-bold uppercase tracking-[0.3em] text-[#b7ef00] sm:text-xs">
             Training program
           </p>
 
-          <h3 className="text-[clamp(2rem,6vw,4.8rem)] font-black leading-[0.9] tracking-[-0.055em] text-[#f3f4e9]">
+          <h3 className="text-[clamp(2.25rem,6vw,4.8rem)] font-black leading-[0.9] tracking-[-0.055em] text-[#f3f4e9]">
             {program.title}
           </h3>
 
-          <p className="mt-5 max-w-[620px] text-[13px] leading-6 text-white/55 sm:text-[15px] sm:leading-7">
+          <p className="mt-5 max-w-[620px] text-[13px] leading-6 text-white/60 sm:text-[15px] sm:leading-7 lg:max-w-[540px]">
             {program.description}
           </p>
         </div>
@@ -241,21 +317,21 @@ function ProgramCard({
         <div className="mt-auto flex flex-col gap-5 border-t border-white/10 pt-5 sm:flex-row sm:items-end sm:justify-between">
           <div className="flex flex-wrap gap-x-8 gap-y-4">
             <div>
-              <p className="text-[9px] font-bold uppercase tracking-[0.25em] text-white/30 sm:text-[10px]">
+              <p className="text-[9px] font-bold uppercase tracking-[0.25em] text-white/35 sm:text-[10px]">
                 Duration
               </p>
 
-              <p className="mt-1 text-sm font-bold text-white/85">
+              <p className="mt-1 text-sm font-bold text-white/90">
                 {program.duration}
               </p>
             </div>
 
             <div>
-              <p className="text-[9px] font-bold uppercase tracking-[0.25em] text-white/30 sm:text-[10px]">
+              <p className="text-[9px] font-bold uppercase tracking-[0.25em] text-white/35 sm:text-[10px]">
                 Level
               </p>
 
-              <p className="mt-1 text-sm font-bold text-white/85">
+              <p className="mt-1 text-sm font-bold text-white/90">
                 {program.level}
               </p>
             </div>
@@ -300,6 +376,7 @@ export default function ProgramsSection() {
           <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
             <h2 className="max-w-[800px] text-[clamp(2.5rem,7vw,6rem)] font-black leading-[0.88] tracking-[-0.06em] text-[#f3f4e9]">
               Training That
+
               <span className="block text-[#efff9a]">
                 Moves With You
               </span>
@@ -307,27 +384,29 @@ export default function ProgramsSection() {
 
             <p className="max-w-[420px] text-[13px] leading-6 text-white/50 sm:text-[15px] sm:leading-7">
               Choose a program built around your
-              strength, endurance and transformation
-              goals.
+              strength, endurance and
+              transformation goals.
             </p>
           </div>
         </div>
 
-       <ScrollStack
-  itemDistance={150}
-  itemStackDistance={16}
-  stackPosition="clamp(88px, 12vh, 118px)"
-  endDistance="55vh"
->
-  {programs.map((program) => (
-    <ScrollStackItem
-      key={program.title}
-      itemClassName="mx-auto max-w-[1080px]"
-    >
-      <ProgramCard program={program} />
-    </ScrollStackItem>
-  ))}
-</ScrollStack>
+        <ScrollStack
+          itemDistance={150}
+          itemStackDistance={16}
+          stackPosition="clamp(88px, 12vh, 118px)"
+          endDistance="55vh"
+        >
+          {programs.map((program) => (
+            <ScrollStackItem
+              key={program.title}
+              itemClassName="mx-auto max-w-[1080px]"
+            >
+              <ProgramCard
+                program={program}
+              />
+            </ScrollStackItem>
+          ))}
+        </ScrollStack>
       </div>
     </section>
   );
