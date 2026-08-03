@@ -1,20 +1,177 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   useState,
   type FormEvent,
   type SVGProps,
 } from "react";
-
+import { useAuth } from "@/components/providers/auth-provider";
 import { useLanguage } from "@/components/providers/language-provider";
+import {
+  AuthApiError,
+  loginAccount,
+} from "@/lib/auth-api";
 
 type IconProps = SVGProps<SVGSVGElement>;
 
 type LoginErrors = {
-  identifier?: string;
+  username?: string;
   password?: string;
 };
+
+const pageCopy = {
+  en: {
+    homeLabel: "Gym House home",
+    slogan: "Stronger every day",
+
+    englishLabel: "English",
+    amharicLabel: "Amharic",
+
+    backLabel: "Go back to the website",
+    backText: "Back to website",
+
+    securityBadge: "Secure member access",
+
+    heroTitleFirst: "Built for consistency.",
+    heroTitleSecond: "Designed for progress.",
+
+    heroDescription:
+      "Your member account keeps the important parts of your Gym House journey organized in one secure place.",
+
+    facts: [
+      {
+        value: "2400 Birr",
+        label: "Monthly membership",
+      },
+      {
+        value: "7 days",
+        label: "Open every day",
+      },
+      {
+        value: "Included",
+        label: "Training support",
+      },
+    ],
+
+    benefits: [
+      "Check your membership status",
+      "Keep your training information together",
+      "Manage your Gym House account",
+    ],
+
+    memberLogin: "Member login",
+    welcome: "Welcome back.",
+
+    loginDescription:
+      "Enter your account details to continue to your member space.",
+
+    usernameLabel: "Username",
+    usernamePlaceholder: "Enter your username",
+
+    passwordLabel: "Password",
+    passwordPlaceholder: "Enter your password",
+
+    help: "Need help?",
+
+    showPassword: "Show password",
+    hidePassword: "Hide password",
+
+    show: "Show",
+    hide: "Hide",
+
+    signIn: "Sign in",
+    signingIn: "Signing in...",
+
+    notMember: "Not a member yet?",
+    viewMembership: "View membership",
+
+    usernameRequired: "Enter your username.",
+    passwordRequired: "Enter your password.",
+
+    passwordLength:
+      "Password must contain at least 8 characters.",
+
+    unknownError:
+      "Something went wrong. Please try again.",
+  },
+
+  am: {
+    homeLabel: "ወደ ጂም ሃውስ መነሻ",
+    slogan: "በየቀኑ ጠንካራ",
+
+    englishLabel: "እንግሊዝኛ",
+    amharicLabel: "አማርኛ",
+
+    backLabel: "ወደ ድረ ገጹ ተመለስ",
+    backText: "ወደ ድረ ገጹ",
+
+    securityBadge: "ደህንነቱ የተጠበቀ መግቢያ",
+
+    heroTitleFirst: "ለቀጣይነት የተሰራ።",
+    heroTitleSecond: "ለእድገት የተዘጋጀ።",
+
+    heroDescription:
+      "የጂም ሃውስ መለያዎ የአባልነት መረጃዎን በአንድ ደህንነቱ በተጠበቀ ቦታ ያስቀምጣል።",
+
+    facts: [
+      {
+        value: "2400 ብር",
+        label: "ወርሃዊ አባልነት",
+      },
+      {
+        value: "7 ቀናት",
+        label: "በየቀኑ ክፍት",
+      },
+      {
+        value: "ተካትቷል",
+        label: "የስልጠና ድጋፍ",
+      },
+    ],
+
+    benefits: [
+      "የአባልነትዎን ሁኔታ ይመልከቱ",
+      "የስልጠና መረጃዎን ያስተዳድሩ",
+      "የጂም ሃውስ መለያዎን ያስተዳድሩ",
+    ],
+
+    memberLogin: "የአባል መግቢያ",
+    welcome: "እንኳን ደህና መጡ።",
+
+    loginDescription:
+      "ወደ መለያዎ ለመግባት የተጠቃሚ ስምዎንና የይለፍ ቃልዎን ያስገቡ።",
+
+    usernameLabel: "የተጠቃሚ ስም",
+    usernamePlaceholder: "የተጠቃሚ ስምዎን ያስገቡ",
+
+    passwordLabel: "የይለፍ ቃል",
+    passwordPlaceholder: "የይለፍ ቃልዎን ያስገቡ",
+
+    help: "እገዛ ይፈልጋሉ?",
+
+    showPassword: "የይለፍ ቃሉን አሳይ",
+    hidePassword: "የይለፍ ቃሉን ደብቅ",
+
+    show: "አሳይ",
+    hide: "ደብቅ",
+
+    signIn: "ግባ",
+    signingIn: "በመግባት ላይ...",
+
+    notMember: "አባል አይደሉም?",
+    viewMembership: "አባልነትን ይመልከቱ",
+
+    usernameRequired: "የተጠቃሚ ስምዎን ያስገቡ።",
+    passwordRequired: "የይለፍ ቃልዎን ያስገቡ።",
+
+    passwordLength:
+      "የይለፍ ቃሉ ቢያንስ 8 ቁምፊዎች ሊኖሩት ይገባል።",
+
+    unknownError:
+      "ችግር ተፈጥሯል። እባክዎ እንደገና ይሞክሩ።",
+  },
+} as const;
 
 function LogoMark({
   className,
@@ -116,34 +273,19 @@ function ArrowIcon({
   );
 }
 
-const benefits = [
-  "Check your membership status",
-  "Keep your training information together",
-  "Manage your Gym House account",
-];
-
-const facts = [
-  {
-    value: "2400 Birr",
-    label: "Monthly membership",
-  },
-  {
-    value: "7 days",
-    label: "Open every day",
-  },
-  {
-    value: "Included",
-    label: "Training support",
-  },
-];
-
 export default function LoginScreen() {
+    const router = useRouter();
+  const { refreshAuth } = useAuth();
+
   const { language, setLanguage } =
     useLanguage();
 
-  const currentLanguage = language ?? "en";
+  const currentLanguage =
+    language === "am" ? "am" : "en";
 
-  const [identifier, setIdentifier] =
+  const copy = pageCopy[currentLanguage];
+
+  const [username, setUsername] =
     useState("");
 
   const [password, setPassword] =
@@ -158,45 +300,79 @@ export default function LoginScreen() {
   const [formMessage, setFormMessage] =
     useState("");
 
-  function handleSubmit(
+  const [isSubmitting, setIsSubmitting] =
+    useState(false);
+
+  async function handleSubmit(
     event: FormEvent<HTMLFormElement>,
   ) {
     event.preventDefault();
 
+    if (isSubmitting) {
+      return;
+    }
+
     const nextErrors: LoginErrors = {};
 
-    if (!identifier.trim()) {
-      nextErrors.identifier =
-        "Enter your email or phone number.";
+    const normalizedUsername = username
+      .trim()
+      .toLowerCase();
+
+    if (!normalizedUsername) {
+      nextErrors.username =
+        copy.usernameRequired;
     }
 
     if (!password) {
       nextErrors.password =
-        "Enter your password.";
+        copy.passwordRequired;
     } else if (password.length < 8) {
       nextErrors.password =
-        "Password must contain at least 8 characters.";
+        copy.passwordLength;
     }
 
     setErrors(nextErrors);
     setFormMessage("");
 
-    if (Object.keys(nextErrors).length > 0) {
+    if (
+      Object.keys(nextErrors).length > 0
+    ) {
       return;
     }
 
-    /*
-     * We will replace this message with the real
-     * API request when we connect authentication.
-     */
-    setFormMessage(
-      "Authentication is not connected yet. We will connect this form to the backend next.",
-    );
+    setIsSubmitting(true);
+
+    try {
+const result = await loginAccount({
+  username: normalizedUsername,
+  password,
+});
+
+/*
+ * Update the global authentication state
+ * before opening the protected page.
+ */
+await refreshAuth();
+
+        router.replace(result.redirectTo);
+        router.refresh();
+    } catch (error) {
+      if (error instanceof AuthApiError) {
+        setFormMessage(
+          error.getMessage(currentLanguage),
+        );
+
+        return;
+      }
+
+      setFormMessage(copy.unknownError);
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   return (
     <main className="relative min-h-[100svh] overflow-hidden bg-[#050605] text-white">
-      {/* Background grid */}
       <div
         aria-hidden="true"
         className="pointer-events-none absolute inset-0 opacity-[0.035]"
@@ -207,7 +383,6 @@ export default function LoginScreen() {
         }}
       />
 
-      {/* Background glow */}
       <div
         aria-hidden="true"
         className="
@@ -238,7 +413,6 @@ export default function LoginScreen() {
         "
       />
 
-      {/* Header */}
       <header
         className="
           relative
@@ -259,7 +433,7 @@ export default function LoginScreen() {
       >
         <Link
           href="/"
-          aria-label="Gym House home"
+          aria-label={copy.homeLabel}
           className="group inline-flex items-center gap-3"
         >
           <span
@@ -313,13 +487,12 @@ export default function LoginScreen() {
                 text-white/30
               "
             >
-              Stronger every day
+              {copy.slogan}
             </span>
           </span>
         </Link>
 
         <div className="flex items-center gap-2 sm:gap-3">
-          {/* Language selector */}
           <div
             data-no-translate="true"
             className="
@@ -335,10 +508,11 @@ export default function LoginScreen() {
           >
             <button
               type="button"
-              aria-label="English"
+              aria-label={copy.englishLabel}
               aria-pressed={
                 currentLanguage === "en"
               }
+              disabled={isSubmitting}
               onClick={() => setLanguage("en")}
               className={`
                 h-8
@@ -349,6 +523,9 @@ export default function LoginScreen() {
                 uppercase
                 tracking-[0.16em]
                 transition
+
+                disabled:cursor-not-allowed
+                disabled:opacity-60
 
                 sm:px-4
 
@@ -364,10 +541,11 @@ export default function LoginScreen() {
 
             <button
               type="button"
-              aria-label="አማርኛ"
+              aria-label={copy.amharicLabel}
               aria-pressed={
                 currentLanguage === "am"
               }
+              disabled={isSubmitting}
               onClick={() => setLanguage("am")}
               className={`
                 h-8
@@ -377,6 +555,9 @@ export default function LoginScreen() {
                 font-black
                 tracking-[0.08em]
                 transition
+
+                disabled:cursor-not-allowed
+                disabled:opacity-60
 
                 sm:px-4
 
@@ -393,7 +574,7 @@ export default function LoginScreen() {
 
           <Link
             href="/"
-            aria-label="Go back to the website"
+            aria-label={copy.backLabel}
             className="
               group
               flex
@@ -440,7 +621,7 @@ export default function LoginScreen() {
                 sm:inline
               "
             >
-              Back to website
+              {copy.backText}
             </span>
           </Link>
         </div>
@@ -474,7 +655,6 @@ export default function LoginScreen() {
           xl:px-16
         "
       >
-        {/* Information side */}
         <div className="order-2 lg:order-1">
           <div className="max-w-[720px]">
             <div
@@ -511,7 +691,7 @@ export default function LoginScreen() {
                   sm:text-[10px]
                 "
               >
-                Secure member access
+                {copy.securityBadge}
               </span>
             </div>
 
@@ -529,11 +709,11 @@ export default function LoginScreen() {
               "
             >
               <span className="block">
-                Built for consistency.
+                {copy.heroTitleFirst}
               </span>
 
               <span className="block text-[#b7ef00]">
-                Designed for progress.
+                {copy.heroTitleSecond}
               </span>
             </h1>
 
@@ -550,9 +730,7 @@ export default function LoginScreen() {
                 lg:mt-9
               "
             >
-              Your member account keeps the important
-              parts of your Gym House journey organized
-              in one secure place.
+              {copy.heroDescription}
             </p>
 
             <div
@@ -566,7 +744,7 @@ export default function LoginScreen() {
                 lg:mt-10
               "
             >
-              {facts.map((fact) => (
+              {copy.facts.map((fact) => (
                 <div
                   key={fact.label}
                   className="
@@ -616,49 +794,50 @@ export default function LoginScreen() {
                 lg:mt-10
               "
             >
-              {benefits.map((benefit) => (
-                <div
-                  key={benefit}
-                  className="
-                    flex
-                    items-center
-                    gap-3
-                    text-[11px]
-                    font-semibold
-                    text-white/55
-
-                    sm:text-[12px]
-                  "
-                >
-                  <span
-                    aria-hidden="true"
+              {copy.benefits.map(
+                (benefit) => (
+                  <div
+                    key={benefit}
                     className="
                       flex
-                      h-6
-                      w-6
-                      shrink-0
                       items-center
-                      justify-center
-                      rounded-full
-                      border
-                      border-[#b7ef00]/25
-                      bg-[#b7ef00]/[0.07]
-                      text-[12px]
-                      font-black
-                      text-[#b7ef00]
+                      gap-3
+                      text-[11px]
+                      font-semibold
+                      text-white/55
+
+                      sm:text-[12px]
                     "
                   >
-                    ✓
-                  </span>
+                    <span
+                      aria-hidden="true"
+                      className="
+                        flex
+                        h-6
+                        w-6
+                        shrink-0
+                        items-center
+                        justify-center
+                        rounded-full
+                        border
+                        border-[#b7ef00]/25
+                        bg-[#b7ef00]/[0.07]
+                        text-[12px]
+                        font-black
+                        text-[#b7ef00]
+                      "
+                    >
+                      ✓
+                    </span>
 
-                  <span>{benefit}</span>
-                </div>
-              ))}
+                    <span>{benefit}</span>
+                  </div>
+                ),
+              )}
             </div>
           </div>
         </div>
 
-        {/* Login card */}
         <div className="order-1 lg:order-2">
           <div
             className="
@@ -738,7 +917,7 @@ export default function LoginScreen() {
                     sm:text-[10px]
                   "
                 >
-                  Member login
+                  {copy.memberLogin}
                 </p>
 
                 <h2
@@ -751,7 +930,7 @@ export default function LoginScreen() {
                     text-white
                   "
                 >
-                  Welcome back.
+                  {copy.welcome}
                 </h2>
 
                 <p
@@ -765,8 +944,7 @@ export default function LoginScreen() {
                     sm:text-[13px]
                   "
                 >
-                  Enter your account details to continue
-                  to your member space.
+                  {copy.loginDescription}
                 </p>
               </div>
 
@@ -781,10 +959,9 @@ export default function LoginScreen() {
                   sm:mt-10
                 "
               >
-                {/* Email or phone */}
                 <div>
                   <label
-                    htmlFor="identifier"
+                    htmlFor="username"
                     className="
                       mb-2.5
                       block
@@ -795,34 +972,44 @@ export default function LoginScreen() {
                       text-white/45
                     "
                   >
-                    Email or phone number
+                    {copy.usernameLabel}
                   </label>
 
                   <input
-                    id="identifier"
-                    name="identifier"
+                    id="username"
+                    name="username"
                     type="text"
+                    inputMode="text"
                     autoComplete="username"
-                    value={identifier}
-                    placeholder="Enter your email or phone number"
+                    autoCapitalize="none"
+                    spellCheck={false}
+                    value={username}
+                    disabled={isSubmitting}
+                    placeholder={
+                      copy.usernamePlaceholder
+                    }
                     aria-invalid={Boolean(
-                      errors.identifier,
+                      errors.username,
                     )}
                     aria-describedby={
-                      errors.identifier
-                        ? "identifier-error"
+                      errors.username
+                        ? "username-error"
                         : undefined
                     }
                     onChange={(event) => {
-                      setIdentifier(
+                      setUsername(
                         event.target.value,
                       );
 
-                      if (errors.identifier) {
-                        setErrors((current) => ({
-                          ...current,
-                          identifier: undefined,
-                        }));
+                      setFormMessage("");
+
+                      if (errors.username) {
+                        setErrors(
+                          (current) => ({
+                            ...current,
+                            username: undefined,
+                          }),
+                        );
                       }
                     }}
                     className={`
@@ -841,29 +1028,32 @@ export default function LoginScreen() {
 
                       focus:bg-white/[0.055]
 
+                      disabled:cursor-not-allowed
+                      disabled:opacity-60
+
                       ${
-                        errors.identifier
+                        errors.username
                           ? "border-red-400/60 focus:border-red-400/80"
                           : "border-white/[0.09] focus:border-[#b7ef00]/55"
                       }
                     `}
                   />
 
-                  {errors.identifier && (
+                  {errors.username && (
                     <p
-                      id="identifier-error"
+                      id="username-error"
+                      role="alert"
                       className="
                         mt-2
                         text-[11px]
                         text-red-300
                       "
                     >
-                      {errors.identifier}
+                      {errors.username}
                     </p>
                   )}
                 </div>
 
-                {/* Password */}
                 <div>
                   <div
                     className="
@@ -885,7 +1075,7 @@ export default function LoginScreen() {
                         text-white/45
                       "
                     >
-                      Password
+                      {copy.passwordLabel}
                     </label>
 
                     <a
@@ -901,7 +1091,7 @@ export default function LoginScreen() {
                         hover:text-[#b7ef00]
                       "
                     >
-                      Need help?
+                      {copy.help}
                     </a>
                   </div>
 
@@ -916,7 +1106,10 @@ export default function LoginScreen() {
                       }
                       autoComplete="current-password"
                       value={password}
-                      placeholder="Enter your password"
+                      disabled={isSubmitting}
+                      placeholder={
+                        copy.passwordPlaceholder
+                      }
                       aria-invalid={Boolean(
                         errors.password,
                       )}
@@ -930,11 +1123,15 @@ export default function LoginScreen() {
                           event.target.value,
                         );
 
+                        setFormMessage("");
+
                         if (errors.password) {
-                          setErrors((current) => ({
-                            ...current,
-                            password: undefined,
-                          }));
+                          setErrors(
+                            (current) => ({
+                              ...current,
+                              password: undefined,
+                            }),
+                          );
                         }
                       }}
                       className={`
@@ -954,6 +1151,9 @@ export default function LoginScreen() {
 
                         focus:bg-white/[0.055]
 
+                        disabled:cursor-not-allowed
+                        disabled:opacity-60
+
                         ${
                           errors.password
                             ? "border-red-400/60 focus:border-red-400/80"
@@ -964,11 +1164,13 @@ export default function LoginScreen() {
 
                     <button
                       type="button"
+                      disabled={isSubmitting}
                       aria-label={
                         showPassword
-                          ? "Hide password"
-                          : "Show password"
+                          ? copy.hidePassword
+                          : copy.showPassword
                       }
+                      aria-pressed={showPassword}
                       onClick={() => {
                         setShowPassword(
                           (current) => !current,
@@ -991,15 +1193,21 @@ export default function LoginScreen() {
 
                         hover:bg-white/[0.06]
                         hover:text-white
+
+                        disabled:cursor-not-allowed
+                        disabled:opacity-45
                       "
                     >
-                      {showPassword ? "Hide" : "Show"}
+                      {showPassword
+                        ? copy.hide
+                        : copy.show}
                     </button>
                   </div>
 
                   {errors.password && (
                     <p
                       id="password-error"
+                      role="alert"
                       className="
                         mt-2
                         text-[11px]
@@ -1011,68 +1219,20 @@ export default function LoginScreen() {
                   )}
                 </div>
 
-                {/* Remember account */}
-                <label
-                  className="
-                    flex
-                    w-fit
-                    cursor-pointer
-                    items-center
-                    gap-3
-                    text-[11px]
-                    text-white/40
-                  "
-                >
-                  <input
-                    type="checkbox"
-                    name="remember"
-                    className="peer sr-only"
-                  />
-
-                  <span
-                    className="
-                      flex
-                      h-5
-                      w-5
-                      items-center
-                      justify-center
-                      rounded-md
-                      border
-                      border-white/15
-                      bg-white/[0.035]
-                      text-[11px]
-                      font-black
-                      text-transparent
-                      transition
-
-                      peer-checked:border-[#b7ef00]
-                      peer-checked:bg-[#b7ef00]
-                      peer-checked:text-black
-
-                      peer-focus-visible:ring-2
-                      peer-focus-visible:ring-[#b7ef00]/50
-                    "
-                  >
-                    ✓
-                  </span>
-
-                  <span>Keep me signed in</span>
-                </label>
-
                 {formMessage && (
                   <div
-                    role="status"
-                    aria-live="polite"
+                    role="alert"
+                    aria-live="assertive"
                     className="
                       rounded-[16px]
                       border
-                      border-[#b7ef00]/20
-                      bg-[#b7ef00]/[0.055]
+                      border-red-400/25
+                      bg-red-400/[0.07]
                       px-4
                       py-3
                       text-[11px]
                       leading-relaxed
-                      text-[#dfff61]
+                      text-red-200
                     "
                   >
                     {formMessage}
@@ -1081,6 +1241,8 @@ export default function LoginScreen() {
 
                 <button
                   type="submit"
+                  disabled={isSubmitting}
+                  aria-busy={isSubmitting}
                   className="
                     group
                     flex
@@ -1106,21 +1268,48 @@ export default function LoginScreen() {
 
                     active:translate-y-0
                     active:scale-[0.99]
+
+                    disabled:pointer-events-none
+                    disabled:cursor-not-allowed
+                    disabled:opacity-65
                   "
                 >
-                  <span>Sign in</span>
+                  {isSubmitting ? (
+                    <>
+                      <span
+                        aria-hidden="true"
+                        className="
+                          h-4
+                          w-4
+                          animate-spin
+                          rounded-full
+                          border-2
+                          border-black/25
+                          border-t-black
+                        "
+                      />
 
-                  <ArrowIcon
-                    className="
-                      h-5
-                      w-5
-                      transition-transform
-                      duration-300
+                      <span>
+                        {copy.signingIn}
+                      </span>
+                    </>
+                  ) : (
+                    <>
+                      <span>{copy.signIn}</span>
 
-                      group-hover:translate-x-0.5
-                      group-hover:-translate-y-0.5
-                    "
-                  />
+                      <ArrowIcon
+                        className="
+                          h-5
+                          w-5
+                          transition-transform
+                          duration-300
+
+                          group-hover:translate-x-0.5
+                          group-hover:-translate-y-0.5
+                        "
+                      />
+                    </>
+                  )}
                 </button>
               </form>
 
@@ -1135,7 +1324,8 @@ export default function LoginScreen() {
                 "
               >
                 <p className="text-[11px] text-white/35">
-                  Not a member yet?{" "}
+                  {copy.notMember}{" "}
+
                   <Link
                     href="/#membership"
                     className="
@@ -1146,7 +1336,7 @@ export default function LoginScreen() {
                       hover:text-[#b7ef00]
                     "
                   >
-                    View membership
+                    {copy.viewMembership}
                   </Link>
                 </p>
               </div>

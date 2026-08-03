@@ -4,7 +4,11 @@ import { z } from "zod";
 
 const environmentSchema = z.object({
   NODE_ENV: z
-    .enum(["development", "test", "production"])
+    .enum([
+      "development",
+      "test",
+      "production",
+    ])
     .default("development"),
 
   PORT: z.coerce
@@ -16,11 +20,16 @@ const environmentSchema = z.object({
 
   DATABASE_URL: z
     .string()
-    .min(1, "DATABASE_URL is required."),
+    .min(
+      1,
+      "DATABASE_URL is required.",
+    ),
 
   CLIENT_URLS: z
     .string()
-    .default("http://localhost:3000"),
+    .default(
+      "http://localhost:3000",
+    ),
 
   AUTH_PEPPER: z
     .string()
@@ -32,7 +41,9 @@ const environmentSchema = z.object({
   SESSION_COOKIE_NAME: z
     .string()
     .regex(/^[a-zA-Z0-9_-]+$/)
-    .default("gym_house_session"),
+    .default(
+      "gym_house_session",
+    ),
 
   SESSION_TTL_DAYS: z.coerce
     .number()
@@ -40,15 +51,67 @@ const environmentSchema = z.object({
     .min(1)
     .max(30)
     .default(7),
+
+  CLOUDINARY_CLOUD_NAME: z
+    .string()
+    .trim()
+    .min(
+      1,
+      "CLOUDINARY_CLOUD_NAME is required.",
+    ),
+
+  CLOUDINARY_API_KEY: z
+    .string()
+    .trim()
+    .min(
+      1,
+      "CLOUDINARY_API_KEY is required.",
+    ),
+
+  CLOUDINARY_API_SECRET: z
+    .string()
+    .trim()
+    .min(
+      8,
+      "CLOUDINARY_API_SECRET is required.",
+    ),
+
+  /*
+   * Used only for the administrator's
+   * own profile-picture upload.
+   */
+  CLOUDINARY_ADMIN_AVATAR_PRESET: z
+    .string()
+    .trim()
+    .min(
+      1,
+      "CLOUDINARY_ADMIN_AVATAR_PRESET is required.",
+    ),
+
+  /*
+   * Used when an administrator uploads
+   * a customer's profile picture.
+   */
+  CLOUDINARY_CUSTOMER_AVATAR_PRESET: z
+    .string()
+    .trim()
+    .min(
+      1,
+      "CLOUDINARY_CUSTOMER_AVATAR_PRESET is required.",
+    ),
 });
 
 const parsedEnvironment =
-  environmentSchema.safeParse(process.env);
+  environmentSchema.safeParse(
+    process.env,
+  );
 
 if (!parsedEnvironment.success) {
   console.error(
     "Invalid backend environment variables:",
-    parsedEnvironment.error.flatten().fieldErrors,
+    parsedEnvironment.error
+      .flatten()
+      .fieldErrors,
   );
 
   throw new Error(
@@ -56,12 +119,18 @@ if (!parsedEnvironment.success) {
   );
 }
 
-const environment = parsedEnvironment.data;
+const environment =
+  parsedEnvironment.data;
 
-const clientUrls = environment.CLIENT_URLS
-  .split(",")
-  .map((url) => url.trim().replace(/\/+$/, ""))
-  .filter(Boolean);
+const clientUrls =
+  environment.CLIENT_URLS
+    .split(",")
+    .map((url) =>
+      url
+        .trim()
+        .replace(/\/+$/, ""),
+    )
+    .filter(Boolean);
 
 if (clientUrls.length === 0) {
   throw new Error(
@@ -71,7 +140,19 @@ if (clientUrls.length === 0) {
 
 for (const clientUrl of clientUrls) {
   try {
-    new URL(clientUrl);
+    const parsedUrl =
+      new URL(clientUrl);
+
+    if (
+      parsedUrl.protocol !==
+        "http:" &&
+      parsedUrl.protocol !==
+        "https:"
+    ) {
+      throw new Error(
+        "Only HTTP and HTTPS URLs are supported.",
+      );
+    }
   } catch {
     throw new Error(
       `Invalid CLIENT_URLS value: ${clientUrl}`,
@@ -81,7 +162,10 @@ for (const clientUrl of clientUrls) {
 
 export const env = {
   ...environment,
+
   clientUrls,
+
   isProduction:
-    environment.NODE_ENV === "production",
+    environment.NODE_ENV ===
+    "production",
 };

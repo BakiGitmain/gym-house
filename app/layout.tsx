@@ -3,7 +3,7 @@ import {
   Geist,
   Noto_Sans_Ethiopic,
 } from "next/font/google";
-
+import AuthProvider from "@/components/providers/auth-provider";
 import LanguageGate from "@/components/layout/language-gate";
 import SmoothScroll from "@/components/layout/smooth-scroll";
 import WebsiteLoader from "@/components/layout/website-loader";
@@ -42,7 +42,8 @@ export default function RootLayout({
       <body
         className={`${geist.variable} ${notoSansEthiopic.variable} bg-[#080908]`}
       >
-        <LanguageProvider>
+      <LanguageProvider>
+        <AuthProvider>
           <LanguageGate>
             <SiteTranslator />
 
@@ -52,7 +53,8 @@ export default function RootLayout({
               {children}
             </SmoothScroll>
           </LanguageGate>
-        </LanguageProvider>
+        </AuthProvider>
+      </LanguageProvider>
       </body>
     </html>
   );

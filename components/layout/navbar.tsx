@@ -10,10 +10,17 @@ import {
   type MouseEvent,
 } from "react";
 
+import NavbarAccountAction from "@/components/auth/navbar-account-action";
+import { useAuth } from "@/components/providers/auth-provider";
 import { useLanguage } from "@/components/providers/language-provider";
 import type { Language } from "@/lib/translations";
 
-const navigationLinks = [
+type NavigationLink = {
+  label: string;
+  href: string;
+};
+
+const navigationLinks: NavigationLink[] = [
   {
     label: "Home",
     href: "#home",
@@ -209,7 +216,7 @@ function LanguageChooser({
     useRef<HTMLDivElement>(null);
 
   const currentLanguage =
-    language ?? "en";
+    language === "am" ? "am" : "en";
 
   const isAmharic =
     currentLanguage === "am";
@@ -385,6 +392,42 @@ function LanguageChooser({
 export default function Navbar() {
   const lenis = useLenis();
 
+  const { user } = useAuth();
+
+  const { language } = useLanguage();
+
+  const currentLanguage =
+    language === "am" ? "am" : "en";
+
+  const accountNavigationLink:
+    | NavigationLink
+    | null = user
+    ? {
+        label:
+          user.role === "admin"
+            ? currentLanguage === "am"
+              ? "ዳሽቦርድ"
+              : "Dashboard"
+            : currentLanguage === "am"
+              ? "የእኔ መለያ"
+              : "My Account",
+
+        href:
+          user.role === "admin"
+            ? "/admin/dashboard"
+            : "/account",
+      }
+    : null;
+
+  const visibleNavigationLinks:
+    NavigationLink[] =
+    accountNavigationLink
+      ? [
+          ...navigationLinks,
+          accountNavigationLink,
+        ]
+      : navigationLinks;
+
   const [isMenuOpen, setIsMenuOpen] =
     useState(false);
 
@@ -519,6 +562,7 @@ export default function Navbar() {
         {
           rootMargin:
             "-20% 0px -65% 0px",
+
           threshold: [
             0.05,
             0.15,
@@ -582,6 +626,8 @@ export default function Navbar() {
       );
 
     if (!target) {
+      window.location.assign(`/${href}`);
+
       return;
     }
 
@@ -617,7 +663,7 @@ export default function Navbar() {
       indicatorIndex,
 
     "--navigation-count":
-      navigationLinks.length,
+      visibleNavigationLinks.length,
   } as CSSProperties;
 
   return (
@@ -649,7 +695,11 @@ export default function Navbar() {
         <div className="simple-navbar-center">
           <nav
             aria-label="Main navigation"
-            className="simple-desktop-navigation"
+            className={`simple-desktop-navigation ${
+              user
+                ? "has-account-link"
+                : ""
+            }`}
             style={navigationStyle}
             onMouseLeave={() => {
               setHoveredIndex(null);
@@ -660,40 +710,47 @@ export default function Navbar() {
               className="simple-navigation-indicator"
             />
 
-            {navigationLinks.map(
+            {visibleNavigationLinks.map(
               (link, index) => {
+                const isSectionLink =
+                  link.href.startsWith("#");
+
                 const isHighlighted =
                   indicatorIndex === index;
 
+                const isActiveSection =
+                  isSectionLink &&
+                  activeIndex === index;
+
                 return (
                   <Link
-                    key={link.label}
+                    key={`${link.label}-${link.href}`}
                     href={link.href}
                     aria-current={
-                      activeIndex === index
+                      isActiveSection
                         ? "page"
                         : undefined
                     }
                     onMouseEnter={() => {
-                      setHoveredIndex(
-                        index,
-                      );
+                      setHoveredIndex(index);
                     }}
                     onFocus={() => {
-                      setHoveredIndex(
-                        index,
-                      );
+                      setHoveredIndex(index);
                     }}
                     onBlur={() => {
                       setHoveredIndex(null);
                     }}
-                    onClick={(event) => {
-                      selectNavigation(
-                        event,
-                        index,
-                        link.href,
-                      );
-                    }}
+                    onClick={
+                      isSectionLink
+                        ? (event) => {
+                            selectNavigation(
+                              event,
+                              index,
+                              link.href,
+                            );
+                          }
+                        : undefined
+                    }
                     className={`simple-navigation-link ${
                       isHighlighted
                         ? "is-highlighted"
@@ -710,13 +767,7 @@ export default function Navbar() {
           <LanguageChooser menuId="desktop-language-menu" />
         </div>
 
-        <Link
-          href="/login"
-          className="simple-navbar-cta"
-        >
-          <span>Login</span>
-          <ArrowIcon />
-        </Link>
+        <NavbarAccountAction variant="desktop" />
 
         <div className="simple-mobile-navbar-actions">
           <LanguageChooser menuId="mobile-language-menu" />
@@ -774,7 +825,7 @@ export default function Navbar() {
           <span>Navigation</span>
 
           <span className="simple-mobile-menu-count">
-            0{navigationLinks.length}
+            0{visibleNavigationLinks.length}
           </span>
         </div>
 
@@ -782,14 +833,18 @@ export default function Navbar() {
           aria-label="Mobile navigation"
           className="simple-mobile-links"
         >
-          {navigationLinks.map(
+          {visibleNavigationLinks.map(
             (link, index) => {
+              const isSectionLink =
+                link.href.startsWith("#");
+
               const isActive =
+                isSectionLink &&
                 activeIndex === index;
 
               return (
                 <Link
-                  key={link.label}
+                  key={`${link.label}-${link.href}`}
                   href={link.href}
                   tabIndex={
                     isMenuOpen ? 0 : -1
@@ -799,13 +854,19 @@ export default function Navbar() {
                       ? "page"
                       : undefined
                   }
-                  onClick={(event) => {
-                    selectNavigation(
-                      event,
-                      index,
-                      link.href,
-                    );
-                  }}
+                  onClick={
+                    isSectionLink
+                      ? (event) => {
+                          selectNavigation(
+                            event,
+                            index,
+                            link.href,
+                          );
+                        }
+                      : () => {
+                          closeMenu();
+                        }
+                  }
                   className={`simple-mobile-link ${
                     isActive
                       ? "is-active"
@@ -829,20 +890,13 @@ export default function Navbar() {
           )}
         </nav>
 
-        <Link
-          href="/login"
+        <NavbarAccountAction
+          variant="mobile"
           tabIndex={
             isMenuOpen ? 0 : -1
           }
-          onClick={closeMenu}
-          className="simple-mobile-cta"
-        >
-          <span>Login</span>
-
-          <span className="simple-mobile-cta-icon">
-            <ArrowIcon />
-          </span>
-        </Link>
+          onNavigate={closeMenu}
+        />
       </div>
     </header>
   );

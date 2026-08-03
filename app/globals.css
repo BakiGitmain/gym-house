@@ -1425,3 +1425,13 @@ section[id] {
       0.01ms !important;
   }
 }
+/* Wider center navigation when Dashboard/My Account is visible */
+.simple-desktop-navigation.has-account-link {
+  width: min(690px, 55vw);
+}
+
+@media (min-width: 1024px) and (max-width: 1180px) {
+  .simple-desktop-navigation.has-account-link {
+    width: 560px;
+  }
+}

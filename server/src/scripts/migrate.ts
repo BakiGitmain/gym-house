@@ -1,28 +1,132 @@
-import { readFile } from "node:fs/promises";
+import {
+  readdir,
+  readFile,
+} from "node:fs/promises";
 
 import { pool } from "../db/pool.js";
 
 async function migrate() {
-  const migrationFile = new URL(
-    "../db/migrations/001-auth.sql",
-    import.meta.url,
-  );
-
-  const migrationSql =
-    await readFile(
-      migrationFile,
-      "utf8",
+  const migrationsDirectory =
+    new URL(
+      "../db/migrations/",
+      import.meta.url,
     );
 
-  await pool.query(migrationSql);
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS
+      schema_migrations (
+        name TEXT PRIMARY KEY,
+
+        applied_at TIMESTAMPTZ
+          NOT NULL
+          DEFAULT NOW()
+      )
+  `);
+
+  const directoryEntries =
+    await readdir(
+      migrationsDirectory,
+      {
+        withFileTypes: true,
+      },
+    );
+
+  const migrationFiles =
+    directoryEntries
+      .filter(
+        (entry) =>
+          entry.isFile() &&
+          entry.name.endsWith(
+            ".sql",
+          ),
+      )
+      .map(
+        (entry) => entry.name,
+      )
+      .sort(
+        (first, second) =>
+          first.localeCompare(
+            second,
+          ),
+      );
+
+  const appliedResult =
+    await pool.query<{
+      name: string;
+    }>(
+      `
+        SELECT name
+        FROM schema_migrations
+      `,
+    );
+
+  const appliedMigrations =
+    new Set(
+      appliedResult.rows.map(
+        (row) => row.name,
+      ),
+    );
+
+  for (
+    const migrationFile
+    of migrationFiles
+  ) {
+    if (
+      appliedMigrations.has(
+        migrationFile,
+      )
+    ) {
+      console.log(
+        `Skipping ${migrationFile}`,
+      );
+
+      continue;
+    }
+
+    const migrationSql =
+      await readFile(
+        new URL(
+          migrationFile,
+          migrationsDirectory,
+        ),
+        "utf8",
+      );
+
+    console.log(
+      `Applying ${migrationFile}`,
+    );
+
+    await pool.query(
+      migrationSql,
+    );
+
+    await pool.query(
+      `
+        INSERT INTO
+          schema_migrations (
+            name
+          )
+
+        VALUES ($1)
+
+        ON CONFLICT (name)
+        DO NOTHING
+      `,
+      [migrationFile],
+    );
+
+    console.log(
+      `Applied ${migrationFile}`,
+    );
+  }
 
   console.log(
-    "Gym House authentication tables created successfully.",
+    "All database migrations completed.",
   );
 }
 
 migrate()
-  .catch((error) => {
+  .catch((error: unknown) => {
     console.error(
       "Database migration failed:",
       error,
