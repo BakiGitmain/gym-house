@@ -409,6 +409,90 @@ export const AMHARIC_COPY: Readonly<
   "GH — 2400 — FULL ACCESS":
     "GH — 2400 — ሙሉ መዳረሻ",
 
+      /*
+   * Member login
+   */
+  "Back to website": "ወደ ድረ ገጹ ተመለስ",
+  "Go back to the website":
+    "ወደ ድረ ገጹ ተመለስ",
+
+  "Secure member access":
+    "ደህንነቱ የተጠበቀ የአባል መግቢያ",
+
+  "Built for consistency.":
+    "ለቀጣይነት የተዘጋጀ።",
+
+  "Designed for progress.":
+    "ለእድገት የተነደፈ።",
+
+  "Your member account keeps the important parts of your Gym House journey organized in one secure place.":
+    "የአባል መለያዎ የGym House ጉዞዎን አስፈላጊ መረጃዎች በአንድ ደህንነቱ በተጠበቀ ቦታ ያደራጃል።",
+
+  "2400 Birr": "2400 ብር",
+  "Monthly membership": "ወርሃዊ አባልነት",
+
+  "7 days": "7 ቀናት",
+  "Open every day": "በየቀኑ ክፍት",
+
+  Included: "ተካቷል",
+  "Training support": "የስልጠና ድጋፍ",
+
+  "Check your membership status":
+    "የአባልነት ሁኔታዎን ይመልከቱ",
+
+  "Keep your training information together":
+    "የስልጠና መረጃዎን በአንድ ቦታ ያደራጁ",
+
+  "Manage your Gym House account":
+    "የGym House መለያዎን ያስተዳድሩ",
+
+  "Member login": "የአባል መግቢያ",
+  "Welcome back.": "እንኳን ደህና መጡ።",
+
+  "Enter your account details to continue to your member space.":
+    "ወደ አባል ገጽዎ ለመቀጠል የመለያ መረጃዎን ያስገቡ።",
+
+  "Email or phone number":
+    "ኢሜይል ወይም ስልክ ቁጥር",
+
+  "Enter your email or phone number":
+    "ኢሜይልዎን ወይም ስልክ ቁጥርዎን ያስገቡ",
+
+  "Enter your email or phone number.":
+    "ኢሜይልዎን ወይም ስልክ ቁጥርዎን ያስገቡ።",
+
+  Password: "የይለፍ ቃል",
+
+  "Enter your password":
+    "የይለፍ ቃልዎን ያስገቡ",
+
+  "Enter your password.":
+    "የይለፍ ቃልዎን ያስገቡ።",
+
+  "Password must contain at least 8 characters.":
+    "የይለፍ ቃሉ ቢያንስ 8 ፊደላት ወይም ቁጥሮች ሊኖሩት ይገባል።",
+
+  "Need help?": "እገዛ ይፈልጋሉ?",
+
+  Show: "አሳይ",
+  Hide: "ደብቅ",
+
+  "Show password": "የይለፍ ቃል አሳይ",
+  "Hide password": "የይለፍ ቃል ደብቅ",
+
+  "Keep me signed in":
+    "መለያዬ እንደገባ ይቆይ",
+
+  "Sign in": "ግባ",
+
+  "Authentication is not connected yet. We will connect this form to the backend next.":
+    "የመግቢያ ስርዓቱ ገና ከባክኤንድ ጋር አልተገናኘም። ቀጥሎ ይህን ፎርም ከባክኤንድ ጋር እናገናኛለን።",
+
+  "Not a member yet?":
+    "እስካሁን አባል አይደሉም?",
+
+  "View membership": "አባልነትን ይመልከቱ",
+
   /*
    * Footer
    */
