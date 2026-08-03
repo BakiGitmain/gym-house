@@ -532,16 +532,12 @@ export default function AccountPage() {
     setIsLoggingOut,
   ] = useState(false);
 
-  const [
-    profileImageFailed,
-    setProfileImageFailed,
-  ] = useState(false);
-
-  useEffect(() => {
-    setProfileImageFailed(false);
-  }, [
-    user?.profileImageUrl,
-  ]);
+const [
+  failedProfileImageUrl,
+  setFailedProfileImageUrl,
+] = useState<string | null>(
+  null,
+);
 
   if (isLoading) {
     return (
@@ -896,8 +892,9 @@ export default function AccountPage() {
                   shadow-[0_20px_60px_rgba(183,239,0,.12)]
                 "
               >
-                {user.profileImageUrl &&
-                !profileImageFailed ? (
+{user.profileImageUrl &&
+failedProfileImageUrl !==
+  user.profileImageUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
                     src={
@@ -920,11 +917,11 @@ export default function AccountPage() {
                       transform:
                         "scale(1.85)",
                     }}
-                    onError={() => {
-                      setProfileImageFailed(
-                        true,
-                      );
-                    }}
+onError={() => {
+  setFailedProfileImageUrl(
+    user.profileImageUrl,
+  );
+}}
                   />
                 ) : (
                   <span
