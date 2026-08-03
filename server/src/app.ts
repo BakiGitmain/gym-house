@@ -1,7 +1,8 @@
 import cookieParser from "cookie-parser";
 import cors from "cors";
 import express from "express";
-import * as helmetModule from "helmet";
+import type { RequestHandler } from "express";
+import helmetImport from "helmet";
 import adminCustomersRouter from "./routes/admin-customers.routes.js";
 import { env } from "./config/env.js";
 import {
@@ -17,7 +18,10 @@ import {
 } from "./middleware/trusted-origin.js";
 import adminRouter from "./routes/admin.routes.js";
 import authRouter from "./routes/auth.routes.js";
+type HelmetFactory = () => RequestHandler;
 
+const helmet =
+  helmetImport as unknown as HelmetFactory;
 const app = express();
 
 app.disable("x-powered-by");
@@ -27,7 +31,7 @@ app.set(
   env.isProduction ? 1 : false,
 );
 
-app.use(helmetModule.default());
+app.use(helmet());
 
 app.use(
   cors({
