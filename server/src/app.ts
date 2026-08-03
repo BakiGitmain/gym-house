@@ -1,7 +1,7 @@
 import cookieParser from "cookie-parser";
 import cors from "cors";
 import express from "express";
-import helmet from "helmet";
+import * as helmetModule from "helmet";
 import adminCustomersRouter from "./routes/admin-customers.routes.js";
 import { env } from "./config/env.js";
 import {
@@ -27,7 +27,7 @@ app.set(
   env.isProduction ? 1 : false,
 );
 
-app.use(helmet());
+app.use(helmetModule.default());
 
 app.use(
   cors({
