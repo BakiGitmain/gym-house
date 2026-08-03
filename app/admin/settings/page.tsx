@@ -43,7 +43,7 @@ const copy = {
 
     photoTitle: "Profile picture",
     photoDescription:
-      "Upload a JPG, PNG, or WebP image. Maximum size: 5 MB.",
+      "Upload a JPG, PNG, or WebP image. Maximum original size: 20 MB. Large images are compressed automatically.",
     choosePhoto: "Choose image",
     uploadPhoto: "Upload image",
     uploading: "Uploading...",

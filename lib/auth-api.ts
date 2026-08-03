@@ -1,3 +1,8 @@
+import {
+  compressProfileImage,
+  MAX_ORIGINAL_IMAGE_BYTES,
+} from "@/lib/image-compression";
+
 export type AuthRole =
   | "admin"
   | "customer";
@@ -128,12 +133,14 @@ type RequestOptions = {
 const defaultErrorMessage:
   LocalizedMessage = {
     en: "Something went wrong. Please try again.",
+
     am: "ችግር ተፈጥሯል። እባክዎ እንደገና ይሞክሩ።",
   };
 
 const networkErrorMessage:
   LocalizedMessage = {
     en: "Unable to connect to the server. Check your connection and try again.",
+
     am: "ከሰርቨሩ ጋር መገናኘት አልተቻለም። ግንኙነትዎን ያረጋግጡ።",
   };
 
@@ -200,10 +207,12 @@ async function apiRequest<T>(
       `/backend-api/api${path}`,
       {
         method:
-          options.method ?? "GET",
+          options.method ??
+          "GET",
 
         headers:
-          options.body === undefined
+          options.body ===
+          undefined
             ? {
                 Accept:
                   "application/json",
@@ -217,7 +226,8 @@ async function apiRequest<T>(
               },
 
         body:
-          options.body === undefined
+          options.body ===
+          undefined
             ? undefined
             : JSON.stringify(
                 options.body,
@@ -244,7 +254,8 @@ async function apiRequest<T>(
       await response.json();
   } catch {
     throw new AuthApiError({
-      status: response.status,
+      status:
+        response.status,
 
       code:
         "INVALID_SERVER_RESPONSE",
@@ -259,7 +270,8 @@ async function apiRequest<T>(
       payload as ApiErrorResponse;
 
     throw new AuthApiError({
-      status: response.status,
+      status:
+        response.status,
 
       code:
         errorPayload.code ??
@@ -345,9 +357,6 @@ const allowedAvatarTypes =
     "image/webp",
   ]);
 
-const maximumAvatarSize =
-  5 * 1024 * 1024;
-
 export async function uploadAdminAvatar(
   file: File,
 ) {
@@ -358,11 +367,13 @@ export async function uploadAdminAvatar(
   ) {
     throw new AuthApiError({
       status: 400,
+
       code:
         "INVALID_AVATAR_FILE_TYPE",
 
       localizedMessage: {
         en: "Choose a JPG, PNG, or WebP image.",
+
         am: "JPG፣ PNG ወይም WebP ምስል ይምረጡ።",
       },
     });
@@ -370,16 +381,40 @@ export async function uploadAdminAvatar(
 
   if (
     file.size >
-    maximumAvatarSize
+    MAX_ORIGINAL_IMAGE_BYTES
   ) {
     throw new AuthApiError({
       status: 400,
+
       code:
         "AVATAR_FILE_TOO_LARGE",
 
       localizedMessage: {
-        en: "The profile image must be 5 MB or smaller.",
-        am: "የመገለጫ ምስሉ 5 MB ወይም ከዚያ በታች መሆን አለበት።",
+        en: "The original profile image must be 20 MB or smaller.",
+
+        am: "የመገለጫው የመጀመሪያ ምስል 20 MB ወይም ከዚያ በታች መሆን አለበት።",
+      },
+    });
+  }
+
+  let uploadFile: File;
+
+  try {
+    uploadFile =
+      await compressProfileImage(
+        file,
+      );
+  } catch {
+    throw new AuthApiError({
+      status: 400,
+
+      code:
+        "AVATAR_COMPRESSION_FAILED",
+
+      localizedMessage: {
+        en: "The profile image could not be compressed. Choose another image and try again.",
+
+        am: "የመገለጫውን ምስል መጨመቅ አልተቻለም። ሌላ ምስል ይምረጡና እንደገና ይሞክሩ።",
       },
     });
   }
@@ -392,7 +427,7 @@ export async function uploadAdminAvatar(
 
   formData.append(
     "file",
-    file,
+    uploadFile,
   );
 
   formData.append(
@@ -431,6 +466,7 @@ export async function uploadAdminAvatar(
   } catch {
     throw new AuthApiError({
       status: 0,
+
       code:
         "CLOUDINARY_NETWORK_ERROR",
 
@@ -446,7 +482,8 @@ export async function uploadAdminAvatar(
     cloudinaryPayload =
       await cloudinaryResponse.json();
   } catch {
-    cloudinaryPayload = null;
+    cloudinaryPayload =
+      null;
   }
 
   if (
@@ -461,6 +498,7 @@ export async function uploadAdminAvatar(
 
       localizedMessage: {
         en: "The profile image upload failed. Check the file and try again.",
+
         am: "የመገለጫ ምስሉ መጫን አልተሳካም። ምስሉን አረጋግጠው ይሞክሩ።",
       },
     });
@@ -478,11 +516,13 @@ export async function uploadAdminAvatar(
   ) {
     throw new AuthApiError({
       status: 400,
+
       code:
         "UNEXPECTED_AVATAR_UPLOAD",
 
       localizedMessage: {
         en: "The uploaded profile image could not be verified.",
+
         am: "የተጫነው የመገለጫ ምስል ሊረጋገጥ አልቻለም።",
       },
     });

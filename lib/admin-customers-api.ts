@@ -2,6 +2,10 @@ import {
   AuthApiError,
   type LocalizedMessage,
 } from "@/lib/auth-api";
+import {
+  compressProfileImage,
+  MAX_ORIGINAL_IMAGE_BYTES,
+} from "@/lib/image-compression";
 
 export type CustomerStatus =
   | "active"
@@ -321,9 +325,6 @@ const allowedImageTypes =
     "image/webp",
   ]);
 
-const maximumImageSize =
-  5 * 1024 * 1024;
-
 export async function uploadCustomerAvatar(
   file: File,
 ) {
@@ -348,7 +349,7 @@ export async function uploadCustomerAvatar(
 
   if (
     file.size >
-    maximumImageSize
+    MAX_ORIGINAL_IMAGE_BYTES
   ) {
     throw new AuthApiError({
       status: 400,
@@ -357,9 +358,31 @@ export async function uploadCustomerAvatar(
         "CUSTOMER_IMAGE_TOO_LARGE",
 
       localizedMessage: {
-        en: "The customer image must be 5 MB or smaller.",
+        en: "The original customer image must be 20 MB or smaller.",
 
-        am: "የደንበኛው ምስል 5 MB ወይም ከዚያ በታች መሆን አለበት።",
+        am: "የደንበኛው የመጀመሪያ ምስል 20 MB ወይም ከዚያ በታች መሆን አለበት።",
+      },
+    });
+  }
+
+  let uploadFile: File;
+
+  try {
+    uploadFile =
+      await compressProfileImage(
+        file,
+      );
+  } catch {
+    throw new AuthApiError({
+      status: 400,
+
+      code:
+        "CUSTOMER_IMAGE_COMPRESSION_FAILED",
+
+      localizedMessage: {
+        en: "The customer image could not be compressed. Choose another image and try again.",
+
+        am: "የደንበኛውን ምስል መጨመቅ አልተቻለም። ሌላ ምስል ይምረጡና እንደገና ይሞክሩ።",
       },
     });
   }
@@ -377,7 +400,7 @@ export async function uploadCustomerAvatar(
 
   formData.append(
     "file",
-    file,
+    uploadFile,
   );
 
   formData.append(
