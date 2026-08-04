@@ -2,11 +2,11 @@ import {
   randomUUID,
 } from "node:crypto";
 
+import bcrypt from "bcryptjs";
 import {
   Router,
   type Response,
 } from "express";
-import bcrypt from "bcryptjs";
 import type {
   PoolClient,
 } from "pg";
@@ -29,6 +29,11 @@ import {
 import {
   adminCustomerRateLimit,
 } from "../middleware/admin-customer-rate-limit.js";
+import {
+  sendMembershipRenewedEmail,
+  sendWelcomeMembershipEmail,
+  type EmailDeliveryResult,
+} from "../services/membership-email.service.js";
 
 const router = Router();
 
@@ -426,6 +431,7 @@ function isCloudinaryNotFound(
   const cloudinaryError =
     error as {
       http_code?: unknown;
+
       error?: {
         http_code?: unknown;
       };
@@ -460,10 +466,17 @@ function serializeCustomer(
   row: CustomerRow,
 ) {
   return {
-    id: row.id,
-    username: row.username,
-    name: row.name,
-    email: row.email,
+    id:
+      row.id,
+
+    username:
+      row.username,
+
+    name:
+      row.name,
+
+    email:
+      row.email,
 
     profileImageUrl:
       row.profile_image_url,
@@ -563,11 +576,14 @@ async function verifyCustomerAvatar(
             resource_type:
               "image",
 
-            type: "upload",
+            type:
+              "upload",
           },
         )
       ) as CloudinaryImageResource;
-  } catch (error: unknown) {
+  } catch (
+    error: unknown
+  ) {
     if (
       isCloudinaryNotFound(
         error,
@@ -608,7 +624,8 @@ async function verifyCustomerAvatar(
   if (
     resource.format &&
     !allowedAvatarFormats.has(
-      resource.format.toLowerCase(),
+      resource.format
+        .toLowerCase(),
     )
   ) {
     throw new ApiError(
@@ -641,6 +658,7 @@ async function verifyCustomerAvatar(
 
   return {
     publicId,
+
     secureUrl:
       resource.secure_url,
   };
@@ -654,16 +672,21 @@ async function destroyAvatarSafely(
   }
 
   try {
-    await cloudinary.uploader.destroy(
-      publicId,
-      {
-        resource_type:
-          "image",
+    await cloudinary
+      .uploader
+      .destroy(
+        publicId,
+        {
+          resource_type:
+            "image",
 
-        invalidate: true,
-      },
-    );
-  } catch (error: unknown) {
+          invalidate:
+            true,
+        },
+      );
+  } catch (
+    error: unknown
+  ) {
     console.error(
       "Unable to remove old customer avatar:",
       error,
@@ -689,7 +712,8 @@ router.post(
     const parameters = {
       timestamp,
 
-      public_id: publicId,
+      public_id:
+        publicId,
 
       upload_preset:
         env.CLOUDINARY_CUSTOMER_AVATAR_PRESET,
@@ -706,20 +730,24 @@ router.post(
           env.CLOUDINARY_API_SECRET,
         );
 
-    return response.status(200).json({
-      success: true,
+    return response
+      .status(200)
+      .json({
+        success:
+          true,
 
-      publicId,
+        publicId,
 
-      apiKey:
-        env.CLOUDINARY_API_KEY,
+        apiKey:
+          env.CLOUDINARY_API_KEY,
 
-      uploadUrl:
-        `https://api.cloudinary.com/v1_1/${env.CLOUDINARY_CLOUD_NAME}/image/upload`,
+        uploadUrl:
+          `https://api.cloudinary.com/v1_1/${env.CLOUDINARY_CLOUD_NAME}/image/upload`,
 
-      signature,
-      parameters,
-    });
+        signature,
+
+        parameters,
+      });
   },
 );
 
@@ -737,11 +765,14 @@ router.get(
             request.query,
           );
 
-      if (!parsedQuery.success) {
+      if (
+        !parsedQuery.success
+      ) {
         return response
           .status(400)
           .json({
-            success: false,
+            success:
+              false,
 
             code:
               "INVALID_CUSTOMER_QUERY",
@@ -762,93 +793,96 @@ router.get(
       } = parsedQuery.data;
 
       const offset =
-        (page - 1) * limit;
+        (page - 1) *
+        limit;
 
       const customerResult =
-        await pool.query<CustomerRow>(
-          `
-            WITH customer_data AS (
-              ${customerDataSql}
-            )
-
-            SELECT
-              customer_data.*,
-
-              COUNT(*) OVER()
-                AS total_count
-
-            FROM customer_data
-
-            WHERE
-              (
-                $1::TEXT = ''
-
-                OR name ILIKE
-                  '%' || $1 || '%'
-
-                OR username ILIKE
-                  '%' || $1 || '%'
-
-                OR email ILIKE
-                  '%' || $1 || '%'
+        await pool
+          .query<CustomerRow>(
+            `
+              WITH customer_data AS (
+                ${customerDataSql}
               )
 
-              AND (
-                $2::TEXT = 'all'
+              SELECT
+                customer_data.*,
 
-                OR effective_status =
-                  $2::TEXT
-              )
+                COUNT(*) OVER()
+                  AS total_count
 
-            ORDER BY
-              created_at DESC
+              FROM customer_data
 
-            LIMIT $3
-            OFFSET $4
-          `,
-          [
-            search,
-            status,
-            limit,
-            offset,
-          ],
-        );
+              WHERE
+                (
+                  $1::TEXT = ''
+
+                  OR name ILIKE
+                    '%' || $1 || '%'
+
+                  OR username ILIKE
+                    '%' || $1 || '%'
+
+                  OR email ILIKE
+                    '%' || $1 || '%'
+                )
+
+                AND (
+                  $2::TEXT = 'all'
+
+                  OR effective_status =
+                    $2::TEXT
+                )
+
+              ORDER BY
+                created_at DESC
+
+              LIMIT $3
+              OFFSET $4
+            `,
+            [
+              search,
+              status,
+              limit,
+              offset,
+            ],
+          );
 
       const summaryResult =
-        await pool.query<SummaryRow>(
-          `
-            WITH customer_data AS (
-              ${customerDataSql}
-            )
+        await pool
+          .query<SummaryRow>(
+            `
+              WITH customer_data AS (
+                ${customerDataSql}
+              )
 
-            SELECT
-              COUNT(*)::BIGINT
-                AS total_customers,
+              SELECT
+                COUNT(*)::BIGINT
+                  AS total_customers,
 
-              COUNT(*) FILTER (
-                WHERE
-                  effective_status =
-                    'active'
-              )::BIGINT
-                AS active_memberships,
+                COUNT(*) FILTER (
+                  WHERE
+                    effective_status =
+                      'active'
+                )::BIGINT
+                  AS active_memberships,
 
-              COUNT(*) FILTER (
-                WHERE
-                  effective_status =
-                    'expiring'
-              )::BIGINT
-                AS expiring_memberships,
+                COUNT(*) FILTER (
+                  WHERE
+                    effective_status =
+                      'expiring'
+                )::BIGINT
+                  AS expiring_memberships,
 
-              COUNT(*) FILTER (
-                WHERE
-                  effective_status =
-                    'disabled'
-              )::BIGINT
-                AS disabled_accounts
+                COUNT(*) FILTER (
+                  WHERE
+                    effective_status =
+                      'disabled'
+                )::BIGINT
+                  AS disabled_accounts
 
-            FROM customer_data
-          `,
-        );
+              FROM customer_data
+            `,
+          );
 
       const summary =
         summaryResult.rows[0];
@@ -856,18 +890,22 @@ router.get(
       const total =
         Number(
           customerResult.rows[0]
-            ?.total_count ?? 0,
+            ?.total_count ??
+            0,
         );
 
       return response
         .status(200)
         .json({
-          success: true,
+          success:
+            true,
 
           customers:
-            customerResult.rows.map(
-              serializeCustomer,
-            ),
+            customerResult
+              .rows
+              .map(
+                serializeCustomer,
+              ),
 
           summary: {
             totalCustomers:
@@ -909,7 +947,8 @@ router.get(
                 1,
 
                 Math.ceil(
-                  total / limit,
+                  total /
+                    limit,
                 ),
               ),
           },
@@ -929,7 +968,8 @@ router.post(
     next,
   ) => {
     let uploadedAvatar:
-      VerifiedAvatar | null = null;
+      VerifiedAvatar | null =
+        null;
 
     try {
       const parsedCustomer =
@@ -938,11 +978,14 @@ router.post(
             request.body,
           );
 
-      if (!parsedCustomer.success) {
+      if (
+        !parsedCustomer.success
+      ) {
         return response
           .status(400)
           .json({
-            success: false,
+            success:
+              false,
 
             code:
               "INVALID_CUSTOMER_DATA",
@@ -954,7 +997,8 @@ router.post(
             },
 
             errors:
-              parsedCustomer.error
+              parsedCustomer
+                .error
                 .flatten()
                 .fieldErrors,
           });
@@ -1034,7 +1078,8 @@ router.post(
             );
 
         const customerId =
-          userResult.rows[0]?.id;
+          userResult.rows[0]
+            ?.id;
 
         if (!customerId) {
           throw new Error(
@@ -1069,8 +1114,12 @@ router.post(
           `,
           [
             customerId,
-            data.membershipPlanMonths,
-            data.membershipStatus,
+
+            data
+              .membershipPlanMonths,
+
+            data
+              .membershipStatus,
           ],
         );
 
@@ -1090,16 +1139,85 @@ router.post(
           "COMMIT",
         );
 
+        /*
+         * The database transaction has already
+         * committed before sending the email.
+         *
+         * A temporary Gmail failure will not
+         * remove or roll back the customer.
+         */
+        const emailDelivery:
+          EmailDeliveryResult =
+          customer.membership_id &&
+          customer
+            .membership_starts_at &&
+          customer
+            .membership_expires_at
+            ? await sendWelcomeMembershipEmail({
+                userId:
+                  customerId,
+
+                membershipId:
+                  customer.membership_id,
+
+                name:
+                  customer.name,
+
+                email:
+                  customer.email,
+
+                username:
+                  customer.username,
+
+                /*
+                 * This plaintext value exists only
+                 * in the current request and email.
+                 *
+                 * PostgreSQL stores only the bcrypt
+                 * password hash.
+                 */
+                initialPassword:
+                  data.password,
+
+                planMonths:
+                  data
+                    .membershipPlanMonths,
+
+                startsAt:
+                  customer
+                    .membership_starts_at,
+
+                expiresAt:
+                  customer
+                    .membership_expires_at,
+              })
+            : {
+                status:
+                  "skipped",
+              };
+
         return response
           .status(201)
           .json({
-            success: true,
+            success:
+              true,
 
             message: {
-              en: "The customer account was created successfully.",
+              en:
+                emailDelivery.status ===
+                "sent"
+                  ? "The customer account was created and the welcome email was sent successfully."
+                  : "The customer account was created successfully, but the welcome email could not be confirmed.",
 
-              am: "የደንበኛው መለያ በተሳካ ሁኔታ ተፈጥሯል።",
+              am:
+                emailDelivery.status ===
+                "sent"
+                  ? "የደንበኛው መለያ ተፈጥሯል፣ የመግቢያ ኢሜይሉም ተልኳል።"
+                  : "የደንበኛው መለያ ተፈጥሯል፣ ነገር ግን የመግቢያ ኢሜይሉ መላኩ አልተረጋገጠም።",
             },
+
+            emailDelivery:
+              emailDelivery.status,
 
             customer:
               serializeCustomer(
@@ -1107,9 +1225,20 @@ router.post(
               ),
           });
       } catch (error) {
-        await client.query(
-          "ROLLBACK",
-        );
+        /*
+         * ROLLBACK is safe before commit.
+         *
+         * The email service catches its own delivery
+         * errors, so normal Gmail failures will not
+         * reach this database error handler.
+         */
+        try {
+          await client.query(
+            "ROLLBACK",
+          );
+        } catch {
+          // The transaction may already be closed.
+        }
 
         await destroyAvatarSafely(
           uploadedAvatar
@@ -1146,13 +1275,16 @@ router.patch(
     next,
   ) => {
     let newAvatar:
-      VerifiedAvatar | null = null;
+      VerifiedAvatar | null =
+        null;
 
     try {
       const parsedCustomerId =
-        customerIdSchema.safeParse(
-          request.params.customerId,
-        );
+        customerIdSchema
+          .safeParse(
+            request.params
+              .customerId,
+          );
 
       if (
         !parsedCustomerId.success
@@ -1160,7 +1292,8 @@ router.patch(
         return response
           .status(400)
           .json({
-            success: false,
+            success:
+              false,
 
             code:
               "INVALID_CUSTOMER_ID",
@@ -1179,11 +1312,14 @@ router.patch(
             request.body,
           );
 
-      if (!parsedCustomer.success) {
+      if (
+        !parsedCustomer.success
+      ) {
         return response
           .status(400)
           .json({
-            success: false,
+            success:
+              false,
 
             code:
               "INVALID_CUSTOMER_DATA",
@@ -1195,7 +1331,8 @@ router.patch(
             },
 
             errors:
-              parsedCustomer.error
+              parsedCustomer
+                .error
                 .flatten()
                 .fieldErrors,
           });
@@ -1212,7 +1349,8 @@ router.patch(
       ) {
         newAvatar =
           await verifyCustomerAvatar(
-            data.profileImagePublicId,
+            data
+              .profileImagePublicId,
           );
       }
 
@@ -1228,7 +1366,8 @@ router.patch(
         await pool.connect();
 
       let previousAvatarPublicId:
-        string | null = null;
+        string | null =
+          null;
 
       try {
         await client.query(
@@ -1247,6 +1386,7 @@ router.patch(
 
                 WHERE
                   id = $1
+
                   AND role =
                     'customer'
 
@@ -1266,14 +1406,16 @@ router.patch(
           );
 
           await destroyAvatarSafely(
-            newAvatar?.publicId ??
+            newAvatar
+              ?.publicId ??
               null,
           );
 
           return response
             .status(404)
             .json({
-              success: false,
+              success:
+                false,
 
               code:
                 "CUSTOMER_NOT_FOUND",
@@ -1296,7 +1438,9 @@ router.patch(
 
             SET
               name = $2,
+
               username = $3,
+
               email = $4,
 
               profile_image_url =
@@ -1306,7 +1450,8 @@ router.patch(
                   THEN
                     profile_image_url
 
-                  ELSE $5::TEXT
+                  ELSE
+                    $5::TEXT
                 END,
 
               profile_image_public_id =
@@ -1316,7 +1461,8 @@ router.patch(
                   THEN
                     profile_image_public_id
 
-                  ELSE $6::TEXT
+                  ELSE
+                    $6::TEXT
                 END,
 
               is_active = $7,
@@ -1325,16 +1471,20 @@ router.patch(
                 CASE
                   WHEN
                     $8::TEXT IS NULL
-                  THEN password_hash
+                  THEN
+                    password_hash
 
-                  ELSE $8::TEXT
+                  ELSE
+                    $8::TEXT
                 END,
 
               failed_login_attempts = 0,
+
               locked_until = NULL
 
             WHERE
               id = $1
+
               AND role =
                 'customer'
           `,
@@ -1374,7 +1524,8 @@ router.patch(
                 FROM
                   customer_memberships
 
-                WHERE user_id = $1
+                WHERE
+                  user_id = $1
 
                 ORDER BY
                   expires_at DESC,
@@ -1388,12 +1539,14 @@ router.patch(
             );
 
         const membershipId =
-          membershipResult.rows[0]
+          membershipResult
+            .rows[0]
             ?.id;
 
         if (
           membershipId &&
-          data.membershipPlanMonths !==
+          data
+            .membershipPlanMonths !==
             null
         ) {
           await client.query(
@@ -1421,9 +1574,11 @@ router.patch(
             [
               membershipId,
 
-              data.membershipPlanMonths,
+              data
+                .membershipPlanMonths,
 
-              data.membershipStatus,
+              data
+                .membershipStatus,
             ],
           );
         } else if (
@@ -1434,17 +1589,21 @@ router.patch(
               UPDATE
                 customer_memberships
 
-              SET status = $2
+              SET
+                status = $2
 
               WHERE id = $1
             `,
             [
               membershipId,
-              data.membershipStatus,
+
+              data
+                .membershipStatus,
             ],
           );
         } else if (
-          data.membershipPlanMonths !==
+          data
+            .membershipPlanMonths !==
           null
         ) {
           await client.query(
@@ -1475,9 +1634,11 @@ router.patch(
             [
               customerId,
 
-              data.membershipPlanMonths,
+              data
+                .membershipPlanMonths,
 
-              data.membershipStatus,
+              data
+                .membershipStatus,
             ],
           );
         } else {
@@ -1486,14 +1647,16 @@ router.patch(
           );
 
           await destroyAvatarSafely(
-            newAvatar?.publicId ??
+            newAvatar
+              ?.publicId ??
               null,
           );
 
           return response
             .status(400)
             .json({
-              success: false,
+              success:
+                false,
 
               code:
                 "MEMBERSHIP_PLAN_REQUIRED",
@@ -1548,16 +1711,88 @@ router.patch(
           );
         }
 
+        let emailDelivery:
+          EmailDeliveryResult = {
+            status:
+              "skipped",
+          };
+
+        /*
+         * Send a renewal/activation email only when
+         * the administrator intentionally selected
+         * a new membership duration.
+         *
+         * Simple profile edits do not send an email.
+         */
+        if (
+          data
+            .membershipPlanMonths !==
+            null &&
+          data
+            .membershipStatus ===
+            "active" &&
+          customer.membership_id &&
+          customer
+            .membership_starts_at &&
+          customer
+            .membership_expires_at
+        ) {
+          emailDelivery =
+            await sendMembershipRenewedEmail({
+              userId:
+                customerId,
+
+              membershipId:
+                customer.membership_id,
+
+              name:
+                customer.name,
+
+              email:
+                customer.email,
+
+              planMonths:
+                data
+                  .membershipPlanMonths,
+
+              startsAt:
+                customer
+                  .membership_starts_at,
+
+              expiresAt:
+                customer
+                  .membership_expires_at,
+            });
+        }
+
         return response
           .status(200)
           .json({
-            success: true,
+            success:
+              true,
 
             message: {
-              en: "The customer account was updated successfully.",
+              en:
+                emailDelivery.status ===
+                "sent"
+                  ? "The customer account was updated and the membership email was sent successfully."
+                  : emailDelivery.status ===
+                      "failed"
+                    ? "The customer account was updated, but the membership email could not be sent."
+                    : "The customer account was updated successfully.",
 
-              am: "የደንበኛው መለያ በተሳካ ሁኔታ ተሻሽሏል።",
+              am:
+                emailDelivery.status ===
+                "sent"
+                  ? "የደንበኛው መለያ ተሻሽሏል፣ የአባልነት ኢሜይሉም ተልኳል።"
+                  : emailDelivery.status ===
+                      "failed"
+                    ? "የደንበኛው መለያ ተሻሽሏል፣ ነገር ግን የአባልነት ኢሜይሉ አልተላከም።"
+                    : "የደንበኛው መለያ በተሳካ ሁኔታ ተሻሽሏል።",
             },
+
+            emailDelivery:
+              emailDelivery.status,
 
             customer:
               serializeCustomer(
@@ -1565,12 +1800,17 @@ router.patch(
               ),
           });
       } catch (error) {
-        await client.query(
-          "ROLLBACK",
-        );
+        try {
+          await client.query(
+            "ROLLBACK",
+          );
+        } catch {
+          // The transaction may already be closed.
+        }
 
         await destroyAvatarSafely(
-          newAvatar?.publicId ??
+          newAvatar
+            ?.publicId ??
             null,
         );
 
@@ -1593,6 +1833,7 @@ router.patch(
     }
   },
 );
+
 router.delete(
   "/:customerId",
   adminCustomerRateLimit,
@@ -1603,9 +1844,11 @@ router.delete(
   ) => {
     try {
       const parsedCustomerId =
-        customerIdSchema.safeParse(
-          request.params.customerId,
-        );
+        customerIdSchema
+          .safeParse(
+            request.params
+              .customerId,
+          );
 
       if (
         !parsedCustomerId.success
@@ -1613,13 +1856,15 @@ router.delete(
         return response
           .status(400)
           .json({
-            success: false,
+            success:
+              false,
 
             code:
               "INVALID_CUSTOMER_ID",
 
             message: {
               en: "The customer ID is invalid.",
+
               am: "የደንበኛው መለያ ቁጥር ትክክል አይደለም።",
             },
           });
@@ -1632,7 +1877,8 @@ router.delete(
         await pool.connect();
 
       let avatarPublicId:
-        string | null = null;
+        string | null =
+          null;
 
       try {
         await client.query(
@@ -1640,24 +1886,27 @@ router.delete(
         );
 
         const existingResult =
-          await client.query<ExistingCustomerRow>(
-            `
-              SELECT
-                id,
-                profile_image_public_id
+          await client
+            .query<ExistingCustomerRow>(
+              `
+                SELECT
+                  id,
+                  profile_image_public_id
 
-              FROM users
+                FROM users
 
-              WHERE
-                id = $1
-                AND role = 'customer'
+                WHERE
+                  id = $1
 
-              LIMIT 1
+                  AND role =
+                    'customer'
 
-              FOR UPDATE
-            `,
-            [customerId],
-          );
+                LIMIT 1
+
+                FOR UPDATE
+              `,
+              [customerId],
+            );
 
         const existingCustomer =
           existingResult.rows[0];
@@ -1670,13 +1919,15 @@ router.delete(
           return response
             .status(404)
             .json({
-              success: false,
+              success:
+                false,
 
               code:
                 "CUSTOMER_NOT_FOUND",
 
               message: {
                 en: "The customer could not be found.",
+
                 am: "ደንበኛው አልተገኘም።",
               },
             });
@@ -1707,18 +1958,21 @@ router.delete(
         );
 
         const deleteResult =
-          await client.query<CustomerIdRow>(
-            `
-              DELETE FROM users
+          await client
+            .query<CustomerIdRow>(
+              `
+                DELETE FROM users
 
-              WHERE
-                id = $1
-                AND role = 'customer'
+                WHERE
+                  id = $1
 
-              RETURNING id
-            `,
-            [customerId],
-          );
+                  AND role =
+                    'customer'
+
+                RETURNING id
+              `,
+              [customerId],
+            );
 
         if (
           !deleteResult.rows[0]
@@ -1732,9 +1986,13 @@ router.delete(
           "COMMIT",
         );
       } catch (error) {
-        await client.query(
-          "ROLLBACK",
-        );
+        try {
+          await client.query(
+            "ROLLBACK",
+          );
+        } catch {
+          // The transaction may already be closed.
+        }
 
         throw error;
       } finally {
@@ -1748,10 +2006,12 @@ router.delete(
       return response
         .status(200)
         .json({
-          success: true,
+          success:
+            true,
 
           message: {
             en: "The customer account was deleted successfully.",
+
             am: "የደንበኛው መለያ በተሳካ ሁኔታ ተሰርዟል።",
           },
         });
@@ -1760,4 +2020,5 @@ router.delete(
     }
   },
 );
+
 export default router;

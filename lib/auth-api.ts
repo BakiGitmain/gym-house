@@ -7,6 +7,11 @@ export type AuthRole =
   | "admin"
   | "customer";
 
+export type AuthRedirect =
+  | "/admin/dashboard"
+  | "/change-password"
+  | "/account";
+
 export type LocalizedMessage = {
   en: string;
   am: string;
@@ -31,9 +36,17 @@ export type AccountUser =
   };
 
 export type CustomerMembership = {
-  id: string | null;
-  startsAt: string | null;
-  expiresAt: string | null;
+  id:
+    | string
+    | null;
+
+  startsAt:
+    | string
+    | null;
+
+  expiresAt:
+    | string
+    | null;
 
   status:
     | "active"
@@ -43,7 +56,9 @@ export type CustomerMembership = {
     | "cancelled"
     | "expired";
 
-  remainingDays: number | null;
+  remainingDays:
+    | number
+    | null;
 };
 
 export type LoginResponse = {
@@ -51,9 +66,11 @@ export type LoginResponse = {
   message: LocalizedMessage;
   user: AuthUser;
 
+  mustChangePassword:
+    boolean;
+
   redirectTo:
-    | "/admin/dashboard"
-    | "/account";
+    AuthRedirect;
 };
 
 export type CurrentAccountResponse = {
@@ -64,9 +81,11 @@ export type CurrentAccountResponse = {
     | CustomerMembership
     | null;
 
+  mustChangePassword:
+    boolean;
+
   redirectTo:
-    | "/admin/dashboard"
-    | "/account";
+    AuthRedirect;
 };
 
 export type LogoutResponse = {
@@ -115,8 +134,12 @@ type AdminAvatarSignatureResponse = {
 type ApiErrorResponse = {
   success?: false;
   code?: string;
-  message?: LocalizedMessage;
-  retryAfterSeconds?: number;
+
+  message?:
+    LocalizedMessage;
+
+  retryAfterSeconds?:
+    number;
 };
 
 type RequestOptions = {
@@ -169,11 +192,18 @@ export class AuthApiError
 
     retryAfterSeconds?: number;
   }) {
-    super(localizedMessage.en);
+    super(
+      localizedMessage.en,
+    );
 
-    this.name = "AuthApiError";
-    this.status = status;
-    this.code = code;
+    this.name =
+      "AuthApiError";
+
+    this.status =
+      status;
+
+    this.code =
+      code;
 
     this.localizedMessage =
       localizedMessage;
@@ -188,66 +218,77 @@ export class AuthApiError
   }
 
   getMessage(
-    language: "en" | "am",
+    language:
+      | "en"
+      | "am",
   ) {
-    return this.localizedMessage[
-      language
-    ];
+    return this
+      .localizedMessage[
+        language
+      ];
   }
 }
 
 async function apiRequest<T>(
   path: string,
-  options: RequestOptions = {},
+  options:
+    RequestOptions = {},
 ): Promise<T> {
-  let response: Response;
+  let response:
+    Response;
 
   try {
-    response = await fetch(
-      `/backend-api/api${path}`,
-      {
-        method:
-          options.method ??
-          "GET",
+    response =
+      await fetch(
+        `/backend-api/api${path}`,
+        {
+          method:
+            options.method ??
+            "GET",
 
-        headers:
-          options.body ===
-          undefined
-            ? {
-                Accept:
-                  "application/json",
-              }
-            : {
-                Accept:
-                  "application/json",
+          headers:
+            options.body ===
+            undefined
+              ? {
+                  Accept:
+                    "application/json",
+                }
+              : {
+                  Accept:
+                    "application/json",
 
-                "Content-Type":
-                  "application/json",
-              },
+                  "Content-Type":
+                    "application/json",
+                },
 
-        body:
-          options.body ===
-          undefined
-            ? undefined
-            : JSON.stringify(
-                options.body,
-              ),
+          body:
+            options.body ===
+            undefined
+              ? undefined
+              : JSON.stringify(
+                  options.body,
+                ),
 
-        credentials: "include",
-        cache: "no-store",
-      },
-    );
+          credentials:
+            "include",
+
+          cache:
+            "no-store",
+        },
+      );
   } catch {
     throw new AuthApiError({
       status: 0,
-      code: "NETWORK_ERROR",
+      code:
+        "NETWORK_ERROR",
 
       localizedMessage:
         networkErrorMessage,
     });
   }
 
-  let payload: unknown;
+  let payload:
+    unknown;
 
   try {
     payload =
@@ -267,7 +308,8 @@ async function apiRequest<T>(
 
   if (!response.ok) {
     const errorPayload =
-      payload as ApiErrorResponse;
+      payload as
+        ApiErrorResponse;
 
     throw new AuthApiError({
       status:
@@ -299,8 +341,11 @@ export function loginAccount(
   return apiRequest<LoginResponse>(
     "/auth/login",
     {
-      method: "POST",
-      body: input,
+      method:
+        "POST",
+
+      body:
+        input,
     },
   );
 }
@@ -315,19 +360,24 @@ export function logoutAccount() {
   return apiRequest<LogoutResponse>(
     "/auth/logout",
     {
-      method: "POST",
+      method:
+        "POST",
     },
   );
 }
 
 export function updateAdminAccount(
-  input: UpdateAdminAccountInput,
+  input:
+    UpdateAdminAccountInput,
 ) {
   return apiRequest<UpdateAdminAccountResponse>(
     "/admin/settings/account",
     {
-      method: "PATCH",
-      body: input,
+      method:
+        "PATCH",
+
+      body:
+        input,
     },
   );
 }
@@ -336,7 +386,8 @@ function getAdminAvatarSignature() {
   return apiRequest<AdminAvatarSignatureResponse>(
     "/admin/settings/avatar-signature",
     {
-      method: "POST",
+      method:
+        "POST",
     },
   );
 }
@@ -345,7 +396,8 @@ function confirmAdminAvatar() {
   return apiRequest<AdminAvatarResponse>(
     "/admin/settings/avatar",
     {
-      method: "PATCH",
+      method:
+        "PATCH",
     },
   );
 }
@@ -397,7 +449,8 @@ export async function uploadAdminAvatar(
     });
   }
 
-  let uploadFile: File;
+  let uploadFile:
+    File;
 
   try {
     uploadFile =
@@ -443,7 +496,12 @@ export async function uploadAdminAvatar(
   Object.entries(
     signatureData.parameters,
   ).forEach(
-    ([key, value]) => {
+    (
+      [
+        key,
+        value,
+      ],
+    ) => {
       formData.append(
         key,
         String(value),
@@ -459,8 +517,11 @@ export async function uploadAdminAvatar(
       await fetch(
         signatureData.uploadUrl,
         {
-          method: "POST",
-          body: formData,
+          method:
+            "POST",
+
+          body:
+            formData,
         },
       );
   } catch {
@@ -480,7 +541,8 @@ export async function uploadAdminAvatar(
 
   try {
     cloudinaryPayload =
-      await cloudinaryResponse.json();
+      await cloudinaryResponse
+        .json();
   } catch {
     cloudinaryPayload =
       null;

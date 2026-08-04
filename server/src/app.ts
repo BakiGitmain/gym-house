@@ -1,41 +1,63 @@
 import cookieParser from "cookie-parser";
 import cors from "cors";
 import express from "express";
-import type { RequestHandler } from "express";
+
+import type {
+  RequestHandler,
+} from "express";
+
 import helmetImport from "helmet";
-import adminCustomersRouter from "./routes/admin-customers.routes.js";
+
 import { env } from "./config/env.js";
+
 import {
   checkDatabaseConnection,
 } from "./db/pool.js";
+
 import { ApiError } from "./lib/api-error.js";
+
 import {
   errorHandler,
   notFoundHandler,
 } from "./middleware/error-handler.js";
+
 import {
   enforceTrustedOrigin,
 } from "./middleware/trusted-origin.js";
+
+import adminCustomersRouter from "./routes/admin-customers.routes.js";
 import adminRouter from "./routes/admin.routes.js";
 import authRouter from "./routes/auth.routes.js";
-type HelmetFactory = () => RequestHandler;
+import jobsRouter from "./routes/jobs.routes.js";
+
+type HelmetFactory =
+  () => RequestHandler;
 
 const helmet =
-  helmetImport as unknown as HelmetFactory;
+  helmetImport as unknown as
+    HelmetFactory;
+
 const app = express();
 
 app.disable("x-powered-by");
 
 app.set(
   "trust proxy",
-  env.isProduction ? 1 : false,
+  env.isProduction
+    ? 1
+    : false,
 );
 
-app.use(helmet());
+app.use(
+  helmet(),
+);
 
 app.use(
   cors({
-    origin(origin, callback) {
+    origin(
+      origin,
+      callback,
+    ) {
       if (!origin) {
         return callback(
           null,
@@ -44,7 +66,10 @@ app.use(
       }
 
       const normalizedOrigin =
-        origin.replace(/\/+$/, "");
+        origin.replace(
+          /\/+$/,
+          "",
+        );
 
       if (
         env.clientUrls.includes(
@@ -63,6 +88,7 @@ app.use(
           "CORS_ORIGIN_REJECTED",
           {
             en: "This website is not allowed to access the Gym House API.",
+
             am: "ይህ ድረ ገጽ የጂም ሃውስ ኤፒአይን እንዲጠቀም አልተፈቀደለትም።",
           },
         ),
@@ -83,6 +109,7 @@ app.use(
     allowedHeaders: [
       "Content-Type",
       "Accept",
+      "Authorization",
     ],
 
     exposedHeaders: [
@@ -99,17 +126,27 @@ app.use(
   }),
 );
 
-app.use(cookieParser());
+app.use(
+  cookieParser(),
+);
 
-app.use(enforceTrustedOrigin);
+app.use(
+  enforceTrustedOrigin,
+);
 
 app.get(
   "/",
-  (_request, response) => {
-    return response.status(200).json({
-      success: true,
-      service: "Gym House API",
-    });
+  (
+    _request,
+    response,
+  ) => {
+    return response
+      .status(200)
+      .json({
+        success: true,
+        service:
+          "Gym House API",
+      });
   },
 );
 
@@ -123,14 +160,17 @@ app.get(
     try {
       await checkDatabaseConnection();
 
-      return response.status(200).json({
-        success: true,
+      return response
+        .status(200)
+        .json({
+          success: true,
 
-        message: {
-          en: "Gym House backend and database are running.",
-          am: "የጂም ሃውስ ባክኤንድና ዳታቤዝ እየሰሩ ነው።",
-        },
-      });
+          message: {
+            en: "Gym House backend and database are running.",
+
+            am: "የጂም ሃውስ ባክኤንድና ዳታቤዝ እየሰሩ ነው።",
+          },
+        });
     } catch (error) {
       return next(error);
     }
@@ -138,19 +178,31 @@ app.get(
 );
 
 app.use(
+  "/api/jobs",
+  jobsRouter,
+);
+
+app.use(
   "/api/auth",
   authRouter,
 );
+
 app.use(
   "/api/admin/customers",
   adminCustomersRouter,
 );
+
 app.use(
   "/api/admin",
   adminRouter,
 );
 
-app.use(notFoundHandler);
-app.use(errorHandler);
+app.use(
+  notFoundHandler,
+);
+
+app.use(
+  errorHandler,
+);
 
 export default app;

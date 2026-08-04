@@ -15,18 +15,47 @@ import {
   getCurrentAccount,
   logoutAccount,
   type AccountUser,
+  type AuthRedirect,
   type CustomerMembership,
+  type CurrentAccountResponse,
 } from "@/lib/auth-api";
 
 type AuthContextValue = {
-  user: AccountUser | null;
-  membership: CustomerMembership | null;
+  user:
+    | AccountUser
+    | null;
 
-  isLoading: boolean;
-  isAuthenticated: boolean;
+  membership:
+    | CustomerMembership
+    | null;
 
-  refreshAuth: () => Promise<AccountUser | null>;
-  logout: () => Promise<void>;
+  mustChangePassword:
+    boolean;
+
+  redirectTo:
+    | AuthRedirect
+    | null;
+
+  isLoading:
+    boolean;
+
+  isAuthenticated:
+    boolean;
+
+  /*
+   * Keep this return type compatible with
+   * the existing project.
+   */
+  refreshAuth:
+    () =>
+      Promise<
+        AccountUser |
+        null
+      >;
+
+  logout:
+    () =>
+      Promise<void>;
 };
 
 const AuthContext =
@@ -35,55 +64,132 @@ const AuthContext =
   );
 
 type AuthProviderProps = {
-  children: ReactNode;
+  children:
+    ReactNode;
 };
 
-function isAuthenticationError(
+function isUnauthenticatedError(
   error: unknown,
 ) {
   return (
-    error instanceof AuthApiError &&
-    (error.status === 401 ||
-      error.status === 403)
+    error instanceof
+      AuthApiError &&
+    error.status === 401
   );
 }
 
 export default function AuthProvider({
   children,
 }: AuthProviderProps) {
-  const [user, setUser] =
-    useState<AccountUser | null>(null);
+  const [
+    user,
+    setUser,
+  ] =
+    useState<AccountUser | null>(
+      null,
+    );
 
-  const [membership, setMembership] =
+  const [
+    membership,
+    setMembership,
+  ] =
     useState<CustomerMembership | null>(
       null,
     );
 
-  const [isLoading, setIsLoading] =
+  const [
+    mustChangePassword,
+    setMustChangePassword,
+  ] =
+    useState(false);
+
+  const [
+    redirectTo,
+    setRedirectTo,
+  ] =
+    useState<AuthRedirect | null>(
+      null,
+    );
+
+  const [
+    isLoading,
+    setIsLoading,
+  ] =
     useState(true);
 
-  /*
-   * Used after login and whenever we manually
-   * want to refresh the signed-in account.
-   */
-  const refreshAuth =
-    useCallback(async () => {
-      try {
-        const response =
-          await getCurrentAccount();
+  const clearAuthState =
+    useCallback(() => {
+      setUser(
+        null,
+      );
 
-        setUser(response.user);
+      setMembership(
+        null,
+      );
+
+      setMustChangePassword(
+        false,
+      );
+
+      setRedirectTo(
+        null,
+      );
+    }, []);
+
+  const applyAuthResponse =
+    useCallback(
+      (
+        response:
+          CurrentAccountResponse,
+      ) => {
+        setUser(
+          response.user,
+        );
+
         setMembership(
           response.membership,
         );
 
+        setMustChangePassword(
+          response
+            .mustChangePassword,
+        );
+
+        setRedirectTo(
+          response.redirectTo,
+        );
+      },
+      [],
+    );
+
+  /*
+   * Refreshes every part of authentication
+   * state, but returns only the user so it
+   * remains compatible with the original
+   * AuthContext API.
+   */
+  const refreshAuth =
+    useCallback(async (): Promise<
+      AccountUser | null
+    > => {
+      try {
+        const response =
+          await getCurrentAccount();
+
+        applyAuthResponse(
+          response,
+        );
+
         return response.user;
-      } catch (error: unknown) {
+      } catch (
+        error: unknown
+      ) {
         if (
-          isAuthenticationError(error)
+          isUnauthenticatedError(
+            error,
+          )
         ) {
-          setUser(null);
-          setMembership(null);
+          clearAuthState();
 
           return null;
         }
@@ -95,82 +201,105 @@ export default function AuthProvider({
 
         return null;
       } finally {
-        setIsLoading(false);
+        setIsLoading(
+          false,
+        );
       }
-    }, []);
+    }, [
+      applyAuthResponse,
+      clearAuthState,
+    ]);
 
   /*
-   * Check the existing session when the app
-   * first loads.
-   *
-   * State updates happen inside asynchronous
-   * Promise callbacks instead of synchronously
-   * inside the Effect body.
+   * Check the current session when the
+   * application initially loads.
    */
   useEffect(() => {
-    let cancelled = false;
+    let cancelled =
+      false;
 
     getCurrentAccount()
-      .then((response) => {
-        if (cancelled) {
-          return;
-        }
+      .then(
+        (
+          response,
+        ) => {
+          if (cancelled) {
+            return;
+          }
 
-        setUser(response.user);
-        setMembership(
-          response.membership,
-        );
-      })
-      .catch((error: unknown) => {
-        if (cancelled) {
-          return;
-        }
-
-        if (
-          !isAuthenticationError(error)
-        ) {
-          console.error(
-            "Unable to check authentication:",
-            error,
+          applyAuthResponse(
+            response,
           );
-        }
+        },
+      )
+      .catch(
+        (
+          error:
+            unknown,
+        ) => {
+          if (cancelled) {
+            return;
+          }
 
-        setUser(null);
-        setMembership(null);
-      })
+          if (
+            !isUnauthenticatedError(
+              error,
+            )
+          ) {
+            console.error(
+              "Unable to check authentication:",
+              error,
+            );
+          }
+
+          clearAuthState();
+        },
+      )
       .finally(() => {
         if (!cancelled) {
-          setIsLoading(false);
+          setIsLoading(
+            false,
+          );
         }
       });
 
     return () => {
-      cancelled = true;
+      cancelled =
+        true;
     };
-  }, []);
+  }, [
+    applyAuthResponse,
+    clearAuthState,
+  ]);
 
   const logout =
     useCallback(async () => {
       try {
         await logoutAccount();
-      } catch (error: unknown) {
+      } catch (
+        error: unknown
+      ) {
         console.error(
           "Unable to complete logout request:",
           error,
         );
       } finally {
-        setUser(null);
-        setMembership(null);
+        clearAuthState();
       }
-    }, []);
+    }, [
+      clearAuthState,
+    ]);
 
   const value =
     useMemo<AuthContextValue>(
       () => ({
         user,
         membership,
+        mustChangePassword,
+        redirectTo,
 
         isLoading,
+
         isAuthenticated:
           user !== null,
 
@@ -180,6 +309,8 @@ export default function AuthProvider({
       [
         user,
         membership,
+        mustChangePassword,
+        redirectTo,
         isLoading,
         refreshAuth,
         logout,
@@ -187,7 +318,9 @@ export default function AuthProvider({
     );
 
   return (
-    <AuthContext.Provider value={value}>
+    <AuthContext.Provider
+      value={value}
+    >
       {children}
     </AuthContext.Provider>
   );
@@ -195,7 +328,9 @@ export default function AuthProvider({
 
 export function useAuth() {
   const context =
-    useContext(AuthContext);
+    useContext(
+      AuthContext,
+    );
 
   if (!context) {
     throw new Error(

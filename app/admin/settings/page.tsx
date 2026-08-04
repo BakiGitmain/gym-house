@@ -828,7 +828,7 @@ function AdminSettingsForm({
                 className={`mt-5 rounded-[15px] border px-4 py-3 text-[11px] leading-5 ${
                   accountStatus.type ===
                   "success"
-                    ? "border-[#b7ef00]/20 bg-[#b7ef00]/[0.06] text-[#dfff61]"
+                    ? "border-[#b7ef00]/20 bg-[#b7ef00]/6 text-[#dfff61]"
                     : "border-red-400/25 bg-red-400/[0.07] text-red-200"
                 }`}
               >
