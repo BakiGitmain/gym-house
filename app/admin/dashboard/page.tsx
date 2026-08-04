@@ -145,6 +145,15 @@ const copy = {
     deleting:
       "Deleting customer...",
 
+    closeDialog:
+      "Close confirmation",
+
+    editCustomer:
+      "Edit customer",
+
+    deleteCustomerAction:
+      "Delete customer",
+
     status: {
       all: "All",
       active: "Active",
@@ -191,9 +200,6 @@ const copy = {
     tableLastLogin: "የመጨረሻ መግቢያ",
     tableAction: "እርምጃዎች",
 
-    editLabel: "ደንበኛን አስተካክል",
-    deleteLabel: "ደንበኛን ሰርዝ",
-
     enabled: "ተፈቅዷል",
     disabledStatus: "ተዘግቷል",
     never: "አልገባም",
@@ -229,13 +235,22 @@ const copy = {
       "ይህ መለያውን፣ የአባልነት መረጃውን፣ ንቁ ሴሽኖችንና የመገለጫ ምስሉን ሙሉ በሙሉ ይሰርዛል። መመለስ አይቻልም።",
 
     deleteCustomer:
-      "አዎ፣ ደንበኛውን ሰርዝ",
+      "አዎ",
 
     keepCustomer:
-      "አይ፣ ደንበኛውን አቆይ",
+      "አይ",
 
     deleting:
-      "ደንበኛውን በመሰረዝ ላይ...",
+      "በመሰረዝ ላይ...",
+
+    closeDialog:
+      "ማረጋገጫውን ዝጋ",
+
+    editCustomer:
+      "ደንበኛን አስተካክል",
+
+    deleteCustomerAction:
+      "ደንበኛን ሰርዝ",
 
     status: {
       all: "ሁሉም",
@@ -310,7 +325,7 @@ function DashboardLoader({
         <div className="relative flex h-24 w-24 items-center justify-center">
           <span className="absolute inset-0 rounded-full border border-[#b7ef00]/15" />
 
-          <span className="absolute inset-2 animate-spin rounded-full border-2 border-transparent border-t-[#b7ef00] border-r-[#b7ef00]/30 motion-reduce:animate-none" />
+          <span className="absolute inset-2 animate-spin rounded-full border-2 border-transparent border-r-[#b7ef00]/30 border-t-[#b7ef00] motion-reduce:animate-none" />
 
           <span className="flex h-14 w-14 items-center justify-center rounded-full bg-[#b7ef00] text-sm font-black tracking-[-0.04em] text-black">
             GH
@@ -417,7 +432,9 @@ function DeleteConfirmationModal({
       >
         <button
           type="button"
-          aria-label="Close"
+          aria-label={
+            text.closeDialog
+          }
           disabled={isDeleting}
           onClick={onClose}
           className="absolute right-5 top-5 flex h-9 w-9 items-center justify-center rounded-full border border-white/[0.08] bg-white/[0.035] text-white/40 transition hover:border-white/20 hover:text-white disabled:cursor-not-allowed disabled:opacity-30"
@@ -489,6 +506,7 @@ function DeleteConfirmationModal({
                   size={15}
                   className="animate-spin"
                 />
+
                 <span>
                   {text.deleting}
                 </span>
@@ -496,6 +514,7 @@ function DeleteConfirmationModal({
             ) : (
               <>
                 <Trash2 size={15} />
+
                 <span>
                   {text.deleteCustomer}
                 </span>
@@ -524,7 +543,9 @@ function formatDate(
     );
 
   if (
-    Number.isNaN(date.getTime())
+    Number.isNaN(
+      date.getTime(),
+    )
   ) {
     return value;
   }
@@ -653,9 +674,11 @@ async function preloadImageUrls(
               }
 
               completed = true;
+
               window.clearTimeout(
                 timeout,
               );
+
               resolve();
             };
 
@@ -692,6 +715,7 @@ function LoadingRows() {
 
           <div className="flex-1">
             <div className="h-3 w-36 rounded-full bg-white/[0.07]" />
+
             <div className="mt-2 h-2 w-24 rounded-full bg-white/[0.04]" />
           </div>
 
@@ -841,7 +865,7 @@ export default function AdminDashboardPage() {
           });
 
         await preloadImageUrls([
-          user?.profileImageUrl,
+          user.profileImageUrl,
           ...result.customers.map(
             (customer) =>
               customer.profileImageUrl,
@@ -1154,7 +1178,10 @@ export default function AdminDashboardPage() {
             className="inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.16em] text-white/45 transition hover:text-[#b7ef00]"
           >
             <ArrowLeft size={15} />
-            <span>{text.back}</span>
+
+            <span>
+              {text.back}
+            </span>
           </Link>
 
           <div className="flex min-w-0 items-center gap-3 rounded-full border border-white/[0.07] bg-white/[0.025] py-1.5 pl-1.5 pr-4">
@@ -1214,6 +1241,7 @@ export default function AdminDashboardPage() {
             className="flex h-14 w-full items-center justify-center gap-3 rounded-[18px] bg-[#b7ef00] px-7 text-[10px] font-black uppercase tracking-[0.17em] text-black transition hover:-translate-y-0.5 hover:bg-[#ccff32] sm:w-fit"
           >
             <Plus size={18} />
+
             <span>
               {text.addCustomer}
             </span>
@@ -1279,8 +1307,9 @@ export default function AdminDashboardPage() {
 
               <button
                 type="submit"
-                aria-label={text.search}
-                title={text.search}
+                aria-label={
+                  text.search
+                }
                 className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[15px] bg-white text-black transition hover:bg-[#b7ef00]"
               >
                 <Search size={17} />
@@ -1335,6 +1364,7 @@ export default function AdminDashboardPage() {
               className="mx-4 mt-4 flex items-center gap-2 rounded-[14px] border border-[#b7ef00]/20 bg-[#b7ef00]/[0.055] px-4 py-3 text-[11px] text-[#dfff61] sm:mx-5"
             >
               <ShieldCheck size={15} />
+
               <span>
                 {pageMessage}
               </span>
@@ -1496,10 +1526,7 @@ export default function AdminDashboardPage() {
                               <button
                                 type="button"
                                 aria-label={
-                                  text.editLabel
-                                }
-                                title={
-                                  text.editLabel
+                                  text.editCustomer
                                 }
                                 onClick={() => {
                                   setModal({
@@ -1519,10 +1546,7 @@ export default function AdminDashboardPage() {
                               <button
                                 type="button"
                                 aria-label={
-                                  text.deleteLabel
-                                }
-                                title={
-                                  text.deleteLabel
+                                  text.deleteCustomerAction
                                 }
                                 onClick={() => {
                                   setDeleteError(
@@ -1625,11 +1649,11 @@ export default function AdminDashboardPage() {
                         {customer.email}
                       </p>
 
-                      <div className="mt-4 grid grid-cols-2 gap-2">
+                      <div className="mt-4 flex items-center justify-end gap-2">
                         <button
                           type="button"
                           aria-label={
-                            text.editLabel
+                            text.editCustomer
                           }
                           onClick={() => {
                             setModal({
@@ -1641,18 +1665,15 @@ export default function AdminDashboardPage() {
                               "",
                             );
                           }}
-                          className="flex h-11 items-center justify-center gap-2 rounded-[14px] border border-white/10 bg-white/[0.035] text-[9px] font-black uppercase tracking-[0.1em] text-white/55 transition hover:border-[#b7ef00]/30 hover:text-[#b7ef00]"
+                          className="flex h-11 w-11 items-center justify-center rounded-[14px] border border-white/10 bg-white/[0.035] text-white/55 transition hover:border-[#b7ef00]/30 hover:bg-[#b7ef00]/[0.07] hover:text-[#b7ef00]"
                         >
-                          <Pencil size={14} />
-                          <span>
-                            {text.editLabel}
-                          </span>
+                          <Pencil size={16} />
                         </button>
 
                         <button
                           type="button"
                           aria-label={
-                            text.deleteLabel
+                            text.deleteCustomerAction
                           }
                           onClick={() => {
                             setDeleteError(
@@ -1663,12 +1684,9 @@ export default function AdminDashboardPage() {
                               customer,
                             );
                           }}
-                          className="flex h-11 items-center justify-center gap-2 rounded-[14px] border border-red-400/15 bg-red-400/[0.04] text-[9px] font-black uppercase tracking-[0.1em] text-red-300/70 transition hover:border-red-400/35 hover:bg-red-400/[0.08] hover:text-red-200"
+                          className="flex h-11 w-11 items-center justify-center rounded-[14px] border border-red-400/15 bg-red-400/[0.04] text-red-300/70 transition hover:border-red-400/35 hover:bg-red-400/[0.09] hover:text-red-200"
                         >
-                          <Trash2 size={14} />
-                          <span>
-                            {text.deleteLabel}
-                          </span>
+                          <Trash2 size={16} />
                         </button>
                       </div>
                     </article>
