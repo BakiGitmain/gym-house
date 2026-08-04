@@ -864,13 +864,13 @@ export default function AdminDashboardPage() {
             status: "all",
           });
 
-        await preloadImageUrls([
-          user.profileImageUrl,
-          ...result.customers.map(
-            (customer) =>
-              customer.profileImageUrl,
-          ),
-        ]);
+await preloadImageUrls([
+  user?.profileImageUrl,
+  ...result.customers.map(
+    (customer) =>
+      customer.profileImageUrl,
+  ),
+]);
 
         if (cancelled) {
           return;
