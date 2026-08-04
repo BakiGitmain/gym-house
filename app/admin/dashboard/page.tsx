@@ -9,6 +9,23 @@ import {
   useState,
   type FormEvent,
 } from "react";
+import {
+  AlertTriangle,
+  ArrowLeft,
+  ChevronLeft,
+  ChevronRight,
+  Clock3,
+  LoaderCircle,
+  Pencil,
+  Plus,
+  Search,
+  ShieldCheck,
+  Trash2,
+  UserCheck,
+  Users,
+  UserX,
+  X,
+} from "lucide-react";
 
 import CustomerFormModal from "@/components/admin/customer-form-modal";
 import { useAuth } from "@/components/providers/auth-provider";
@@ -17,6 +34,7 @@ import {
   AuthApiError,
 } from "@/lib/auth-api";
 import {
+  deleteAdminCustomer,
   getAdminCustomers,
   type AdminCustomer,
   type CustomerPagination,
@@ -61,6 +79,7 @@ const copy = {
     back: "Back to website",
     eyebrow: "Customer management",
     title: "Admin dashboard",
+
     description:
       "Create customer accounts, control access, and manage every Gym House membership.",
 
@@ -81,14 +100,12 @@ const copy = {
     tableMembership: "Membership",
     tableAccess: "Access",
     tableLastLogin: "Last login",
-    tableAction: "Action",
+    tableAction: "Actions",
 
-    edit: "Manage",
     enabled: "Enabled",
     disabledStatus: "Disabled",
     never: "Never",
     noMembership: "No membership",
-
     remaining: "days remaining",
 
     emptyTitle:
@@ -101,8 +118,32 @@ const copy = {
     next: "Next",
     page: "Page",
 
-    loading: "Loading customers...",
-    redirecting: "Redirecting...",
+    loadingTitle:
+      "Preparing dashboard",
+
+    loadingDescription:
+      "Loading customer data and profile images...",
+
+    refreshing:
+      "Refreshing customers...",
+
+    redirecting:
+      "Redirecting...",
+
+    deleteTitle:
+      "Delete customer?",
+
+    deleteDescription:
+      "This permanently removes the account, membership records, active sessions, and profile image. This action cannot be undone.",
+
+    deleteCustomer:
+      "Yes",
+
+    keepCustomer:
+      "No",
+
+    deleting:
+      "Deleting customer...",
 
     status: {
       all: "All",
@@ -118,12 +159,16 @@ const copy = {
 
     unknownError:
       "Unable to load customers. Try again.",
+
+    unknownDeleteError:
+      "Unable to delete this customer. Try again.",
   },
 
   am: {
     back: "ወደ ድረ ገጹ",
     eyebrow: "የደንበኛ አስተዳደር",
     title: "የአስተዳዳሪ ዳሽቦርድ",
+
     description:
       "የደንበኛ መለያዎችን ይፍጠሩ፣ መዳረሻን ይቆጣጠሩና አባልነቶችን ያስተዳድሩ።",
 
@@ -144,14 +189,15 @@ const copy = {
     tableMembership: "አባልነት",
     tableAccess: "መዳረሻ",
     tableLastLogin: "የመጨረሻ መግቢያ",
-    tableAction: "እርምጃ",
+    tableAction: "እርምጃዎች",
 
-    edit: "አስተዳድር",
+    editLabel: "ደንበኛን አስተካክል",
+    deleteLabel: "ደንበኛን ሰርዝ",
+
     enabled: "ተፈቅዷል",
     disabledStatus: "ተዘግቷል",
     never: "አልገባም",
     noMembership: "አባልነት የለም",
-
     remaining: "ቀናት ቀርተዋል",
 
     emptyTitle:
@@ -164,8 +210,32 @@ const copy = {
     next: "ቀጣይ",
     page: "ገጽ",
 
-    loading: "ደንበኞችን በመጫን ላይ...",
-    redirecting: "በመመለስ ላይ...",
+    loadingTitle:
+      "ዳሽቦርዱን በማዘጋጀት ላይ",
+
+    loadingDescription:
+      "የደንበኛ መረጃና ምስሎች በመጫን ላይ...",
+
+    refreshing:
+      "ደንበኞችን በማደስ ላይ...",
+
+    redirecting:
+      "በመመለስ ላይ...",
+
+    deleteTitle:
+      "ደንበኛው ይሰረዝ?",
+
+    deleteDescription:
+      "ይህ መለያውን፣ የአባልነት መረጃውን፣ ንቁ ሴሽኖችንና የመገለጫ ምስሉን ሙሉ በሙሉ ይሰርዛል። መመለስ አይቻልም።",
+
+    deleteCustomer:
+      "አዎ፣ ደንበኛውን ሰርዝ",
+
+    keepCustomer:
+      "አይ፣ ደንበኛውን አቆይ",
+
+    deleting:
+      "ደንበኛውን በመሰረዝ ላይ...",
 
     status: {
       all: "ሁሉም",
@@ -181,6 +251,9 @@ const copy = {
 
     unknownError:
       "ደንበኞቹን መጫን አልተቻለም። እንደገና ይሞክሩ።",
+
+    unknownDeleteError:
+      "ደንበኛውን መሰረዝ አልተቻለም። እንደገና ይሞክሩ።",
   },
 } as const;
 
@@ -201,11 +274,237 @@ function RouteRedirect({
   ]);
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-[#050605] text-white">
-      <p className="text-sm text-white/40">
-        {label}
-      </p>
+    <DashboardLoader
+      title={label}
+      description=""
+    />
+  );
+}
+
+function DashboardLoader({
+  title,
+  description,
+}: {
+  title: string;
+  description: string;
+}) {
+  return (
+    <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[#050605] px-6 text-white">
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 opacity-[0.035]"
+        style={{
+          backgroundImage:
+            "linear-gradient(rgba(255,255,255,.8) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.8) 1px,transparent 1px)",
+          backgroundSize:
+            "70px 70px",
+        }}
+      />
+
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute h-[420px] w-[420px] rounded-full bg-[#b7ef00]/10 blur-[150px]"
+      />
+
+      <div className="relative flex flex-col items-center text-center">
+        <div className="relative flex h-24 w-24 items-center justify-center">
+          <span className="absolute inset-0 rounded-full border border-[#b7ef00]/15" />
+
+          <span className="absolute inset-2 animate-spin rounded-full border-2 border-transparent border-t-[#b7ef00] border-r-[#b7ef00]/30 motion-reduce:animate-none" />
+
+          <span className="flex h-14 w-14 items-center justify-center rounded-full bg-[#b7ef00] text-sm font-black tracking-[-0.04em] text-black">
+            GH
+          </span>
+        </div>
+
+        <p className="mt-7 text-[10px] font-black uppercase tracking-[0.28em] text-[#b7ef00]">
+          Gym House
+        </p>
+
+        <h1 className="mt-3 text-2xl font-black tracking-[-0.04em]">
+          {title}
+        </h1>
+
+        {description && (
+          <p className="mt-3 max-w-sm text-[12px] leading-6 text-white/35">
+            {description}
+          </p>
+        )}
+
+        <div className="mt-7 h-1 w-48 overflow-hidden rounded-full bg-white/[0.06]">
+          <div className="h-full w-1/2 animate-pulse rounded-full bg-[#b7ef00]" />
+        </div>
+      </div>
     </main>
+  );
+}
+
+function DeleteConfirmationModal({
+  customer,
+  language,
+  isDeleting,
+  error,
+  onClose,
+  onConfirm,
+}: {
+  customer: AdminCustomer;
+  language: DashboardLanguage;
+  isDeleting: boolean;
+  error: string;
+  onClose: () => void;
+  onConfirm: () => void;
+}) {
+  const text =
+    copy[language];
+
+  useEffect(() => {
+    const previousOverflow =
+      document.body.style.overflow;
+
+    document.body.style.overflow =
+      "hidden";
+
+    function handleKeyDown(
+      event: KeyboardEvent,
+    ) {
+      if (
+        event.key === "Escape" &&
+        !isDeleting
+      ) {
+        onClose();
+      }
+    }
+
+    window.addEventListener(
+      "keydown",
+      handleKeyDown,
+    );
+
+    return () => {
+      document.body.style.overflow =
+        previousOverflow;
+
+      window.removeEventListener(
+        "keydown",
+        handleKeyDown,
+      );
+    };
+  }, [
+    isDeleting,
+    onClose,
+  ]);
+
+  return (
+    <div
+      role="presentation"
+      onMouseDown={(event) => {
+        if (
+          event.target ===
+            event.currentTarget &&
+          !isDeleting
+        ) {
+          onClose();
+        }
+      }}
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/75 px-4 py-8 backdrop-blur-md"
+    >
+      <section
+        role="alertdialog"
+        aria-modal="true"
+        aria-labelledby="delete-customer-title"
+        aria-describedby="delete-customer-description"
+        className="relative w-full max-w-md overflow-hidden rounded-[28px] border border-white/10 bg-[#0b0d0a] p-6 shadow-[0_35px_120px_rgba(0,0,0,.8)] sm:p-7"
+      >
+        <button
+          type="button"
+          aria-label="Close"
+          disabled={isDeleting}
+          onClick={onClose}
+          className="absolute right-5 top-5 flex h-9 w-9 items-center justify-center rounded-full border border-white/[0.08] bg-white/[0.035] text-white/40 transition hover:border-white/20 hover:text-white disabled:cursor-not-allowed disabled:opacity-30"
+        >
+          <X size={16} />
+        </button>
+
+        <div className="flex h-14 w-14 items-center justify-center rounded-[18px] border border-red-400/20 bg-red-400/[0.08] text-red-300">
+          <AlertTriangle size={25} />
+        </div>
+
+        <h2
+          id="delete-customer-title"
+          className="mt-6 pr-10 text-2xl font-black tracking-[-0.04em]"
+        >
+          {text.deleteTitle}
+        </h2>
+
+        <div className="mt-4 rounded-[18px] border border-white/[0.07] bg-white/[0.025] p-4">
+          <p className="text-[13px] font-bold text-white">
+            {customer.name}
+          </p>
+
+          <p className="mt-1 text-[10px] text-white/35">
+            @{customer.username}
+          </p>
+
+          <p className="mt-1 truncate text-[10px] text-white/25">
+            {customer.email}
+          </p>
+        </div>
+
+        <p
+          id="delete-customer-description"
+          className="mt-5 text-[12px] leading-6 text-white/45"
+        >
+          {text.deleteDescription}
+        </p>
+
+        {error && (
+          <p
+            role="alert"
+            className="mt-4 rounded-[14px] border border-red-400/20 bg-red-400/[0.07] px-4 py-3 text-[11px] leading-5 text-red-200"
+          >
+            {error}
+          </p>
+        )}
+
+        <div className="mt-7 grid gap-3 sm:grid-cols-2">
+          <button
+            type="button"
+            autoFocus
+            disabled={isDeleting}
+            onClick={onClose}
+            className="h-12 rounded-[15px] border border-white/10 bg-white/[0.035] px-4 text-[9px] font-black uppercase tracking-[0.11em] text-white/60 transition hover:border-white/20 hover:bg-white/[0.06] hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            {text.keepCustomer}
+          </button>
+
+          <button
+            type="button"
+            disabled={isDeleting}
+            onClick={onConfirm}
+            className="flex h-12 items-center justify-center gap-2 rounded-[15px] bg-red-500 px-4 text-[9px] font-black uppercase tracking-[0.1em] text-white transition hover:bg-red-400 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {isDeleting ? (
+              <>
+                <LoaderCircle
+                  size={15}
+                  className="animate-spin"
+                />
+                <span>
+                  {text.deleting}
+                </span>
+              </>
+            ) : (
+              <>
+                <Trash2 size={15} />
+                <span>
+                  {text.deleteCustomer}
+                </span>
+              </>
+            )}
+          </button>
+        </div>
+      </section>
+    </div>
   );
 }
 
@@ -225,9 +524,7 @@ function formatDate(
     );
 
   if (
-    Number.isNaN(
-      date.getTime(),
-    )
+    Number.isNaN(date.getTime())
   ) {
     return value;
   }
@@ -275,45 +572,135 @@ function CustomerAvatar({
 }: {
   customer: AdminCustomer;
 }) {
+  const [
+    failedImageUrl,
+    setFailedImageUrl,
+  ] =
+    useState<string | null>(
+      null,
+    );
+
   const initial =
     customer.name
       .trim()
       .charAt(0)
       .toUpperCase() || "C";
 
+  const showImage =
+    Boolean(
+      customer.profileImageUrl,
+    ) &&
+    failedImageUrl !==
+      customer.profileImageUrl;
+
   return (
-    <span
-      aria-hidden="true"
-      className="
-        flex
-        h-11
-        w-11
-        shrink-0
-        items-center
-        justify-center
-        overflow-hidden
-        rounded-full
-        border
-        border-white/10
-        bg-[#b7ef00]
-        bg-cover
-        bg-center
-        text-sm
-        font-black
-        text-black
-      "
-      style={
-        customer.profileImageUrl
-          ? {
-              backgroundImage:
-                `url("${customer.profileImageUrl}")`,
-            }
-          : undefined
-      }
-    >
-      {!customer.profileImageUrl &&
-        initial}
+    <span className="relative flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full border border-white/10 bg-[#b7ef00] text-sm font-black text-black">
+      {showImage ? (
+        <img
+          src={
+            customer.profileImageUrl ??
+            ""
+          }
+          alt=""
+          className="h-full w-full object-cover"
+          onError={() => {
+            setFailedImageUrl(
+              customer.profileImageUrl,
+            );
+          }}
+        />
+      ) : (
+        initial
+      )}
     </span>
+  );
+}
+
+async function preloadImageUrls(
+  urls: Array<
+    string | null | undefined
+  >,
+) {
+  if (
+    typeof window ===
+    "undefined"
+  ) {
+    return;
+  }
+
+  const uniqueUrls = [
+    ...new Set(
+      urls.filter(
+        (url): url is string =>
+          Boolean(url),
+      ),
+    ),
+  ];
+
+  await Promise.all(
+    uniqueUrls.map(
+      (url) =>
+        new Promise<void>(
+          (resolve) => {
+            const image =
+              new window.Image();
+
+            let completed = false;
+
+            const finish = () => {
+              if (completed) {
+                return;
+              }
+
+              completed = true;
+              window.clearTimeout(
+                timeout,
+              );
+              resolve();
+            };
+
+            const timeout =
+              window.setTimeout(
+                finish,
+                8000,
+              );
+
+            image.onload = finish;
+            image.onerror = finish;
+            image.src = url;
+
+            if (image.complete) {
+              finish();
+            }
+          },
+        ),
+    ),
+  );
+}
+
+function LoadingRows() {
+  return (
+    <div className="min-h-[350px] animate-pulse p-4 sm:p-5">
+      {Array.from({
+        length: 5,
+      }).map((_, index) => (
+        <div
+          key={index}
+          className="flex items-center gap-4 border-b border-white/[0.05] py-5 last:border-0"
+        >
+          <div className="h-11 w-11 shrink-0 rounded-full bg-white/[0.06]" />
+
+          <div className="flex-1">
+            <div className="h-3 w-36 rounded-full bg-white/[0.07]" />
+            <div className="mt-2 h-2 w-24 rounded-full bg-white/[0.04]" />
+          </div>
+
+          <div className="hidden h-8 w-24 rounded-full bg-white/[0.05] sm:block" />
+
+          <div className="h-10 w-20 rounded-[13px] bg-white/[0.05]" />
+        </div>
+      ))}
+    </div>
   );
 }
 
@@ -336,12 +723,18 @@ export default function AdminDashboardPage() {
   const text =
     copy[currentLanguage];
 
-  const [customers, setCustomers] =
+  const [
+    customers,
+    setCustomers,
+  ] =
     useState<AdminCustomer[]>(
       [],
     );
 
-  const [summary, setSummary] =
+  const [
+    summary,
+    setSummary,
+  ] =
     useState<CustomerSummary>(
       emptySummary,
     );
@@ -357,12 +750,14 @@ export default function AdminDashboardPage() {
   const [
     searchInput,
     setSearchInput,
-  ] = useState("");
+  ] =
+    useState("");
 
   const [
     appliedSearch,
     setAppliedSearch,
-  ] = useState("");
+  ] =
+    useState("");
 
   const [
     statusFilter,
@@ -373,37 +768,86 @@ export default function AdminDashboardPage() {
     );
 
   const [
+    isInitialLoading,
+    setIsInitialLoading,
+  ] =
+    useState(true);
+
+  const [
     isCustomersLoading,
     setIsCustomersLoading,
-  ] = useState(true);
+  ] =
+    useState(false);
 
   const [
     pageMessage,
     setPageMessage,
-  ] = useState("");
+  ] =
+    useState("");
 
   const [
     pageError,
     setPageError,
-  ] = useState("");
+  ] =
+    useState("");
 
   const [
     modal,
     setModal,
-  ] = useState<ModalState>(
-    null,
-  );
+  ] =
+    useState<ModalState>(
+      null,
+    );
+
+  const [
+    deleteTarget,
+    setDeleteTarget,
+  ] =
+    useState<AdminCustomer | null>(
+      null,
+    );
+
+  const [
+    isDeleting,
+    setIsDeleting,
+  ] =
+    useState(false);
+
+  const [
+    deleteError,
+    setDeleteError,
+  ] =
+    useState("");
 
   useEffect(() => {
+    if (
+      isAuthLoading ||
+      !user ||
+      user.role !== "admin"
+    ) {
+      return;
+    }
+
     let cancelled = false;
 
-    getAdminCustomers({
-      page: 1,
-      limit: 12,
-      search: "",
-      status: "all",
-    })
-      .then((result) => {
+    async function loadInitialData() {
+      try {
+        const result =
+          await getAdminCustomers({
+            page: 1,
+            limit: 12,
+            search: "",
+            status: "all",
+          });
+
+        await preloadImageUrls([
+          user?.profileImageUrl,
+          ...result.customers.map(
+            (customer) =>
+              customer.profileImageUrl,
+          ),
+        ]);
+
         if (cancelled) {
           return;
         }
@@ -419,45 +863,44 @@ export default function AdminDashboardPage() {
         setPagination(
           result.pagination,
         );
-      })
-      .catch(
-        (error: unknown) => {
-          if (cancelled) {
-            return;
-          }
+      } catch (error: unknown) {
+        if (cancelled) {
+          return;
+        }
 
-          if (
-            error instanceof
-            AuthApiError
-          ) {
-            setPageError(
-              error.getMessage(
-                currentLanguage,
-              ),
-            );
-
-            return;
-          }
-
+        if (
+          error instanceof
+          AuthApiError
+        ) {
+          setPageError(
+            error.getMessage(
+              currentLanguage,
+            ),
+          );
+        } else {
           setPageError(
             text.unknownError,
           );
-        },
-      )
-      .finally(() => {
+        }
+      } finally {
         if (!cancelled) {
-          setIsCustomersLoading(
+          setIsInitialLoading(
             false,
           );
         }
-      });
+      }
+    }
+
+    void loadInitialData();
 
     return () => {
       cancelled = true;
     };
-    }, [
+  }, [
     currentLanguage,
+    isAuthLoading,
     text.unknownError,
+    user,
   ]);
 
   async function loadCustomers({
@@ -480,6 +923,13 @@ export default function AdminDashboardPage() {
           search,
           status,
         });
+
+      await preloadImageUrls(
+        result.customers.map(
+          (customer) =>
+            customer.profileImageUrl,
+        ),
+      );
 
       setCustomers(
         result.customers,
@@ -508,7 +958,9 @@ export default function AdminDashboardPage() {
         );
       }
     } finally {
-      setIsCustomersLoading(false);
+      setIsCustomersLoading(
+        false,
+      );
     }
   }
 
@@ -538,18 +990,71 @@ export default function AdminDashboardPage() {
     setPageMessage(message);
 
     await loadCustomers({
-      page:
-        pagination.page,
+      page: pagination.page,
     });
+  }
+
+  async function handleDelete() {
+    if (!deleteTarget) {
+      return;
+    }
+
+    setIsDeleting(true);
+    setDeleteError("");
+    setPageError("");
+    setPageMessage("");
+
+    try {
+      const result =
+        await deleteAdminCustomer(
+          deleteTarget.id,
+        );
+
+      const nextPage =
+        customers.length === 1 &&
+        pagination.page > 1
+          ? pagination.page - 1
+          : pagination.page;
+
+      setDeleteTarget(null);
+
+      setPageMessage(
+        result.message[
+          currentLanguage
+        ],
+      );
+
+      await loadCustomers({
+        page: nextPage,
+      });
+    } catch (error: unknown) {
+      if (
+        error instanceof
+        AuthApiError
+      ) {
+        setDeleteError(
+          error.getMessage(
+            currentLanguage,
+          ),
+        );
+      } else {
+        setDeleteError(
+          text.unknownDeleteError,
+        );
+      }
+    } finally {
+      setIsDeleting(false);
+    }
   }
 
   if (isAuthLoading) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-[#050605] text-white">
-        <p className="animate-pulse text-sm text-white/40">
-          {text.loading}
-        </p>
-      </main>
+      <DashboardLoader
+        title={text.loadingTitle}
+        description={
+          text.loadingDescription
+        }
+      />
     );
   }
 
@@ -573,6 +1078,17 @@ export default function AdminDashboardPage() {
     );
   }
 
+  if (isInitialLoading) {
+    return (
+      <DashboardLoader
+        title={text.loadingTitle}
+        description={
+          text.loadingDescription
+        }
+      />
+    );
+  }
+
   const statusOptions:
     CustomerStatusFilter[] = [
       "all",
@@ -591,50 +1107,36 @@ export default function AdminDashboardPage() {
       label: text.total,
       value:
         summary.totalCustomers,
+      icon: Users,
     },
     {
       label: text.active,
       value:
         summary.activeMemberships,
+      icon: UserCheck,
     },
     {
       label: text.expiring,
       value:
         summary.expiringMemberships,
+      icon: Clock3,
     },
     {
       label: text.disabled,
       value:
         summary.disabledAccounts,
+      icon: UserX,
     },
   ];
 
   return (
-    <main
-      className="
-        relative
-        min-h-screen
-        overflow-hidden
-        bg-[#050605]
-        px-4
-        pb-16
-        pt-5
-        text-white
-
-        sm:px-7
-        sm:pt-7
-
-        lg:px-10
-        lg:pb-20
-      "
-    >
+    <main className="relative min-h-screen overflow-hidden bg-[#050605] px-4 pb-16 pt-5 text-white sm:px-7 sm:pt-7 lg:px-10 lg:pb-20">
       <div
         aria-hidden="true"
         className="pointer-events-none absolute inset-0 opacity-[0.03]"
         style={{
           backgroundImage:
             "linear-gradient(rgba(255,255,255,.8) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.8) 1px,transparent 1px)",
-
           backgroundSize:
             "72px 72px",
         }}
@@ -642,147 +1144,59 @@ export default function AdminDashboardPage() {
 
       <div
         aria-hidden="true"
-        className="
-          pointer-events-none
-          absolute
-          -left-40
-          top-24
-          h-[480px]
-          w-[480px]
-          rounded-full
-          bg-[#b7ef00]/10
-          blur-[170px]
-        "
+        className="pointer-events-none absolute -left-40 top-24 h-[480px] w-[480px] rounded-full bg-[#b7ef00]/10 blur-[170px]"
       />
 
       <div className="relative mx-auto max-w-[1500px]">
-        <header
-          className="
-            flex
-            flex-wrap
-            items-center
-            justify-between
-            gap-4
-          "
-        >
+        <header className="flex flex-wrap items-center justify-between gap-4">
           <Link
             href="/"
-            className="
-              inline-flex
-              items-center
-              gap-3
-              text-[10px]
-              font-black
-              uppercase
-              tracking-[0.16em]
-              text-white/45
-              transition
-
-              hover:text-[#b7ef00]
-            "
+            className="inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.16em] text-white/45 transition hover:text-[#b7ef00]"
           >
-            <span>←</span>
+            <ArrowLeft size={15} />
             <span>{text.back}</span>
           </Link>
 
-          <div className="flex min-w-0 items-center gap-3">
-            <span
-              aria-hidden="true"
-              className="
-                flex
-                h-10
-                w-10
-                shrink-0
-                items-center
-                justify-center
-                overflow-hidden
-                rounded-full
-                border
-                border-white/10
-                bg-[#b7ef00]
-                bg-cover
-                bg-center
-                text-xs
-                font-black
-                text-black
-              "
-              style={
-                user.profileImageUrl
-                  ? {
-                      backgroundImage:
-                        `url("${user.profileImageUrl}")`,
-                    }
-                  : undefined
-              }
-            >
-              {!user.profileImageUrl &&
+          <div className="flex min-w-0 items-center gap-3 rounded-full border border-white/[0.07] bg-white/[0.025] py-1.5 pl-1.5 pr-4">
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#b7ef00] text-xs font-black text-black">
+              {user.profileImageUrl ? (
+                <img
+                  src={
+                    user.profileImageUrl
+                  }
+                  alt=""
+                  className="h-full w-full object-cover"
+                />
+              ) : (
                 user.name
                   .charAt(0)
-                  .toUpperCase()}
+                  .toUpperCase()
+              )}
             </span>
 
             <span className="min-w-0">
-              <span className="block max-w-[180px] truncate text-[12px] font-bold">
+              <span className="block max-w-[180px] truncate text-[11px] font-bold">
                 {user.name}
               </span>
 
-              <span className="mt-0.5 block max-w-[180px] truncate text-[9px] text-white/30">
+              <span className="mt-0.5 block max-w-[180px] truncate text-[8px] text-white/30">
                 {user.email}
               </span>
             </span>
           </div>
         </header>
 
-        <section
-          className="
-            mt-14
-            flex
-            flex-col
-            gap-7
-
-            lg:mt-20
-            lg:flex-row
-            lg:items-end
-            lg:justify-between
-          "
-        >
+        <section className="mt-14 flex flex-col gap-7 lg:mt-20 lg:flex-row lg:items-end lg:justify-between">
           <div>
-            <p
-              className="
-                text-[9px]
-                font-black
-                uppercase
-                tracking-[0.3em]
-                text-[#b7ef00]
-              "
-            >
+            <p className="text-[9px] font-black uppercase tracking-[0.3em] text-[#b7ef00]">
               {text.eyebrow}
             </p>
 
-            <h1
-              className="
-                mt-4
-                max-w-4xl
-                text-[clamp(3rem,8vw,6.8rem)]
-                font-black
-                leading-[0.86]
-                tracking-[-0.07em]
-              "
-            >
+            <h1 className="mt-4 max-w-4xl text-[clamp(3rem,8vw,6.8rem)] font-black leading-[0.86] tracking-[-0.07em]">
               {text.title}
             </h1>
 
-            <p
-              className="
-                mt-6
-                max-w-2xl
-                text-[13px]
-                leading-7
-                text-white/38
-
-                sm:text-[15px]
-              "
-            >
+            <p className="mt-6 max-w-2xl text-[13px] leading-7 text-white/38 sm:text-[15px]">
               {text.description}
             </p>
           </div>
@@ -797,186 +1211,86 @@ export default function AdminDashboardPage() {
 
               setPageMessage("");
             }}
-            className="
-              flex
-              h-14
-              w-full
-              items-center
-              justify-center
-              gap-3
-              rounded-[18px]
-              bg-[#b7ef00]
-              px-7
-              text-[10px]
-              font-black
-              uppercase
-              tracking-[0.17em]
-              text-black
-              transition
-
-              hover:-translate-y-0.5
-              hover:bg-[#ccff32]
-
-              sm:w-fit
-            "
+            className="flex h-14 w-full items-center justify-center gap-3 rounded-[18px] bg-[#b7ef00] px-7 text-[10px] font-black uppercase tracking-[0.17em] text-black transition hover:-translate-y-0.5 hover:bg-[#ccff32] sm:w-fit"
           >
-            <span className="text-lg leading-none">
-              +
-            </span>
-
+            <Plus size={18} />
             <span>
               {text.addCustomer}
             </span>
           </button>
         </section>
 
-        <section
-          className="
-            mt-10
-            grid
-            grid-cols-2
-            gap-3
-
-            lg:grid-cols-4
-          "
-        >
+        <section className="mt-10 grid grid-cols-2 gap-3 lg:grid-cols-4">
           {statisticCards.map(
-            (card) => (
-              <article
-                key={card.label}
-                className="
-                  rounded-[22px]
-                  border
-                  border-white/[0.075]
-                  bg-white/[0.025]
-                  p-5
-                  backdrop-blur-sm
+            (card) => {
+              const Icon =
+                card.icon;
 
-                  sm:p-6
-                "
-              >
-                <p
-                  className="
-                    text-3xl
-                    font-black
-                    tracking-[-0.05em]
-
-                    sm:text-4xl
-                  "
+              return (
+                <article
+                  key={card.label}
+                  className="group rounded-[22px] border border-white/[0.075] bg-white/[0.025] p-5 backdrop-blur-sm transition hover:border-[#b7ef00]/20 hover:bg-white/[0.035] sm:p-6"
                 >
-                  {card.value}
-                </p>
+                  <div className="flex items-start justify-between gap-4">
+                    <p className="text-3xl font-black tracking-[-0.05em] sm:text-4xl">
+                      {card.value}
+                    </p>
 
-                <p
-                  className="
-                    mt-2
-                    text-[8px]
-                    font-black
-                    uppercase
-                    tracking-[0.16em]
-                    text-white/30
+                    <span className="flex h-9 w-9 items-center justify-center rounded-[12px] border border-white/[0.07] bg-white/[0.035] text-white/25 transition group-hover:border-[#b7ef00]/20 group-hover:text-[#b7ef00]">
+                      <Icon size={17} />
+                    </span>
+                  </div>
 
-                    sm:text-[9px]
-                  "
-                >
-                  {card.label}
-                </p>
-              </article>
-            ),
+                  <p className="mt-3 text-[8px] font-black uppercase tracking-[0.16em] text-white/30 sm:text-[9px]">
+                    {card.label}
+                  </p>
+                </article>
+              );
+            },
           )}
         </section>
 
-        <section
-          className="
-            mt-6
-            overflow-hidden
-            rounded-[28px]
-            border
-            border-white/[0.08]
-            bg-[#090b08]/90
-            shadow-[0_30px_90px_rgba(0,0,0,.35)]
-            backdrop-blur-xl
-          "
-        >
-          <div
-            className="
-              flex
-              flex-col
-              gap-3
-              border-b
-              border-white/[0.07]
-              p-4
-
-              sm:p-5
-
-              lg:flex-row
-              lg:items-center
-              lg:justify-between
-            "
-          >
+        <section className="mt-6 overflow-hidden rounded-[28px] border border-white/[0.08] bg-[#090b08]/90 shadow-[0_30px_90px_rgba(0,0,0,.35)] backdrop-blur-xl">
+          <div className="flex flex-col gap-3 border-b border-white/[0.07] p-4 sm:p-5 lg:flex-row lg:items-center lg:justify-between">
             <form
               onSubmit={handleSearch}
-              className="
-                flex
-                w-full
-                gap-2
-
-                lg:max-w-xl
-              "
+              className="flex w-full gap-2 lg:max-w-xl"
             >
-              <input
-                type="search"
-                value={searchInput}
-                placeholder={
-                  text.searchPlaceholder
-                }
-                onChange={(event) => {
-                  setSearchInput(
-                    event.target.value,
-                  );
-                }}
-                className="
-                  h-12
-                  min-w-0
-                  flex-1
-                  rounded-[15px]
-                  border
-                  border-white/[0.09]
-                  bg-white/[0.035]
-                  px-4
-                  text-[12px]
-                  text-white
-                  outline-none
-                  transition
-                  placeholder:text-white/20
+              <div className="relative min-w-0 flex-1">
+                <Search
+                  size={16}
+                  className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-white/20"
+                />
 
-                  focus:border-[#b7ef00]/45
-                  focus:bg-white/[0.05]
-                "
-              />
+                <input
+                  type="search"
+                  value={searchInput}
+                  placeholder={
+                    text.searchPlaceholder
+                  }
+                  onChange={(event) => {
+                    setSearchInput(
+                      event.target.value,
+                    );
+                  }}
+                  className="h-12 w-full rounded-[15px] border border-white/[0.09] bg-white/[0.035] pl-11 pr-4 text-[12px] text-white outline-none transition placeholder:text-white/20 focus:border-[#b7ef00]/45 focus:bg-white/[0.05]"
+                />
+              </div>
 
               <button
                 type="submit"
-                className="
-                  h-12
-                  rounded-[15px]
-                  bg-white
-                  px-5
-                  text-[9px]
-                  font-black
-                  uppercase
-                  tracking-[0.13em]
-                  text-black
-                  transition
-
-                  hover:bg-[#b7ef00]
-                "
+                aria-label={text.search}
+                title={text.search}
+                className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[15px] bg-white text-black transition hover:bg-[#b7ef00]"
               >
-                {text.search}
+                <Search size={17} />
               </button>
             </form>
 
             <select
+              aria-label={
+                text.allStatuses
+              }
               value={statusFilter}
               onChange={(event) => {
                 const nextStatus =
@@ -995,20 +1309,7 @@ export default function AdminDashboardPage() {
                     nextStatus,
                 });
               }}
-              className="
-                h-12
-                rounded-[15px]
-                border
-                border-white/[0.09]
-                bg-white/[0.035]
-                px-4
-                text-[11px]
-                font-bold
-                text-white/65
-                outline-none
-
-                lg:min-w-[190px]
-              "
+              className="h-12 rounded-[15px] border border-white/[0.09] bg-white/[0.035] px-4 text-[11px] font-bold text-white/65 outline-none lg:min-w-[190px]"
             >
               {statusOptions.map(
                 (status) => (
@@ -1031,71 +1332,30 @@ export default function AdminDashboardPage() {
           {pageMessage && (
             <p
               role="status"
-              className="
-                mx-4
-                mt-4
-                rounded-[14px]
-                border
-                border-[#b7ef00]/20
-                bg-[#b7ef00]/[0.055]
-                px-4
-                py-3
-                text-[11px]
-                text-[#dfff61]
-
-                sm:mx-5
-              "
+              className="mx-4 mt-4 flex items-center gap-2 rounded-[14px] border border-[#b7ef00]/20 bg-[#b7ef00]/[0.055] px-4 py-3 text-[11px] text-[#dfff61] sm:mx-5"
             >
-              {pageMessage}
+              <ShieldCheck size={15} />
+              <span>
+                {pageMessage}
+              </span>
             </p>
           )}
 
           {pageError && (
             <p
               role="alert"
-              className="
-                mx-4
-                mt-4
-                rounded-[14px]
-                border
-                border-red-400/25
-                bg-red-400/[0.07]
-                px-4
-                py-3
-                text-[11px]
-                text-red-200
-
-                sm:mx-5
-              "
+              className="mx-4 mt-4 rounded-[14px] border border-red-400/25 bg-red-400/[0.07] px-4 py-3 text-[11px] text-red-200 sm:mx-5"
             >
               {pageError}
             </p>
           )}
 
           {isCustomersLoading ? (
-            <div className="flex min-h-[360px] items-center justify-center">
-              <p className="animate-pulse text-[12px] text-white/35">
-                {text.loading}
-              </p>
-            </div>
+            <LoadingRows />
           ) : customers.length === 0 ? (
             <div className="flex min-h-[360px] flex-col items-center justify-center px-6 text-center">
-              <span
-                className="
-                  flex
-                  h-16
-                  w-16
-                  items-center
-                  justify-center
-                  rounded-full
-                  border
-                  border-[#b7ef00]/20
-                  bg-[#b7ef00]/[0.06]
-                  text-3xl
-                  text-[#b7ef00]
-                "
-              >
-                +
+              <span className="flex h-16 w-16 items-center justify-center rounded-full border border-[#b7ef00]/20 bg-[#b7ef00]/[0.06] text-[#b7ef00]">
+                <Users size={27} />
               </span>
 
               <h2 className="mt-5 text-2xl font-black tracking-[-0.04em]">
@@ -1112,30 +1372,25 @@ export default function AdminDashboardPage() {
                 <table className="w-full min-w-[1050px] border-collapse">
                   <thead>
                     <tr className="border-b border-white/[0.07] text-left">
-                      {[
-                        text.tableCustomer,
-                        text.tableMembership,
-                        text.tableAccess,
-                        text.tableLastLogin,
-                        text.tableAction,
-                      ].map(
-                        (heading) => (
-                          <th
-                            key={heading}
-                            className="
-                              px-5
-                              py-4
-                              text-[8px]
-                              font-black
-                              uppercase
-                              tracking-[0.17em]
-                              text-white/25
-                            "
-                          >
-                            {heading}
-                          </th>
-                        ),
-                      )}
+                      <th className="px-5 py-4 text-[8px] font-black uppercase tracking-[0.17em] text-white/25">
+                        {text.tableCustomer}
+                      </th>
+
+                      <th className="px-5 py-4 text-[8px] font-black uppercase tracking-[0.17em] text-white/25">
+                        {text.tableMembership}
+                      </th>
+
+                      <th className="px-5 py-4 text-[8px] font-black uppercase tracking-[0.17em] text-white/25">
+                        {text.tableAccess}
+                      </th>
+
+                      <th className="px-5 py-4 text-[8px] font-black uppercase tracking-[0.17em] text-white/25">
+                        {text.tableLastLogin}
+                      </th>
+
+                      <th className="px-5 py-4 text-right text-[8px] font-black uppercase tracking-[0.17em] text-white/25">
+                        {text.tableAction}
+                      </th>
                     </tr>
                   </thead>
 
@@ -1144,20 +1399,14 @@ export default function AdminDashboardPage() {
                       (customer) => (
                         <tr
                           key={customer.id}
-                          className="
-                            border-b
-                            border-white/[0.055]
-                            transition
-
-                            last:border-b-0
-
-                            hover:bg-white/[0.018]
-                          "
+                          className="border-b border-white/[0.055] transition last:border-b-0 hover:bg-white/[0.018]"
                         >
                           <td className="px-5 py-4">
                             <div className="flex min-w-0 items-center gap-3">
                               <CustomerAvatar
-                                customer={customer}
+                                customer={
+                                  customer
+                                }
                               />
 
                               <div className="min-w-0">
@@ -1178,25 +1427,14 @@ export default function AdminDashboardPage() {
 
                           <td className="px-5 py-4">
                             <span
-                              className={`
-                                inline-flex
-                                rounded-full
-                                border
-                                px-3
-                                py-1.5
-                                text-[8px]
-                                font-black
-                                uppercase
-                                tracking-[0.12em]
-
-                                ${getStatusClasses(
-                                  customer.status,
-                                )}
-                              `}
+                              className={`inline-flex rounded-full border px-3 py-1.5 text-[8px] font-black uppercase tracking-[0.12em] ${getStatusClasses(
+                                customer.status,
+                              )}`}
                             >
                               {
                                 text.status[
-                                  customer.status
+                                  customer
+                                    .status
                                 ]
                               }
                             </span>
@@ -1225,32 +1463,18 @@ export default function AdminDashboardPage() {
 
                           <td className="px-5 py-4">
                             <span
-                              className={`
-                                inline-flex
-                                items-center
-                                gap-2
-                                text-[10px]
-                                font-bold
-
-                                ${
-                                  customer.isActive
-                                    ? "text-[#dfff61]"
-                                    : "text-red-300"
-                                }
-                              `}
+                              className={`inline-flex items-center gap-2 text-[10px] font-bold ${
+                                customer.isActive
+                                  ? "text-[#dfff61]"
+                                  : "text-red-300"
+                              }`}
                             >
                               <span
-                                className={`
-                                  h-1.5
-                                  w-1.5
-                                  rounded-full
-
-                                  ${
-                                    customer.isActive
-                                      ? "bg-[#b7ef00]"
-                                      : "bg-red-400"
-                                  }
-                                `}
+                                className={`h-1.5 w-1.5 rounded-full ${
+                                  customer.isActive
+                                    ? "bg-[#b7ef00]"
+                                    : "bg-red-400"
+                                }`}
                               />
 
                               {customer.isActive
@@ -1268,36 +1492,52 @@ export default function AdminDashboardPage() {
                           </td>
 
                           <td className="px-5 py-4">
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setModal({
-                                  type: "edit",
-                                  customer,
-                                });
+                            <div className="flex items-center justify-end gap-2">
+                              <button
+                                type="button"
+                                aria-label={
+                                  text.editLabel
+                                }
+                                title={
+                                  text.editLabel
+                                }
+                                onClick={() => {
+                                  setModal({
+                                    type: "edit",
+                                    customer,
+                                  });
 
-                                setPageMessage("");
-                              }}
-                              className="
-                                h-10
-                                rounded-[13px]
-                                border
-                                border-white/10
-                                bg-white/[0.035]
-                                px-4
-                                text-[9px]
-                                font-black
-                                uppercase
-                                tracking-[0.12em]
-                                text-white/45
-                                transition
+                                  setPageMessage(
+                                    "",
+                                  );
+                                }}
+                                className="flex h-10 w-10 items-center justify-center rounded-[13px] border border-white/10 bg-white/[0.035] text-white/45 transition hover:border-[#b7ef00]/35 hover:bg-[#b7ef00]/[0.07] hover:text-[#b7ef00]"
+                              >
+                                <Pencil size={15} />
+                              </button>
 
-                                hover:border-[#b7ef00]/30
-                                hover:text-[#b7ef00]
-                              "
-                            >
-                              {text.edit}
-                            </button>
+                              <button
+                                type="button"
+                                aria-label={
+                                  text.deleteLabel
+                                }
+                                title={
+                                  text.deleteLabel
+                                }
+                                onClick={() => {
+                                  setDeleteError(
+                                    "",
+                                  );
+
+                                  setDeleteTarget(
+                                    customer,
+                                  );
+                                }}
+                                className="flex h-10 w-10 items-center justify-center rounded-[13px] border border-red-400/15 bg-red-400/[0.04] text-red-300/55 transition hover:border-red-400/35 hover:bg-red-400/[0.09] hover:text-red-200"
+                              >
+                                <Trash2 size={15} />
+                              </button>
+                            </div>
                           </td>
                         </tr>
                       ),
@@ -1311,17 +1551,13 @@ export default function AdminDashboardPage() {
                   (customer) => (
                     <article
                       key={customer.id}
-                      className="
-                        rounded-[22px]
-                        border
-                        border-white/[0.075]
-                        bg-white/[0.023]
-                        p-4
-                      "
+                      className="rounded-[22px] border border-white/[0.075] bg-white/[0.023] p-4"
                     >
                       <div className="flex min-w-0 items-center gap-3">
                         <CustomerAvatar
-                          customer={customer}
+                          customer={
+                            customer
+                          }
                         />
 
                         <div className="min-w-0 flex-1">
@@ -1335,24 +1571,14 @@ export default function AdminDashboardPage() {
                         </div>
 
                         <span
-                          className={`
-                            shrink-0
-                            rounded-full
-                            border
-                            px-2.5
-                            py-1
-                            text-[7px]
-                            font-black
-                            uppercase
-
-                            ${getStatusClasses(
-                              customer.status,
-                            )}
-                          `}
+                          className={`shrink-0 rounded-full border px-2.5 py-1 text-[7px] font-black uppercase ${getStatusClasses(
+                            customer.status,
+                          )}`}
                         >
                           {
                             text.status[
-                              customer.status
+                              customer
+                                .status
                             ]
                           }
                         </span>
@@ -1382,17 +1608,11 @@ export default function AdminDashboardPage() {
                           </p>
 
                           <p
-                            className={`
-                              mt-2
-                              text-[10px]
-                              font-bold
-
-                              ${
-                                customer.isActive
-                                  ? "text-[#dfff61]"
-                                  : "text-red-300"
-                              }
-                            `}
+                            className={`mt-2 text-[10px] font-bold ${
+                              customer.isActive
+                                ? "text-[#dfff61]"
+                                : "text-red-300"
+                            }`}
                           >
                             {customer.isActive
                               ? text.enabled
@@ -1405,37 +1625,52 @@ export default function AdminDashboardPage() {
                         {customer.email}
                       </p>
 
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setModal({
-                            type: "edit",
-                            customer,
-                          });
+                      <div className="mt-4 grid grid-cols-2 gap-2">
+                        <button
+                          type="button"
+                          aria-label={
+                            text.editLabel
+                          }
+                          onClick={() => {
+                            setModal({
+                              type: "edit",
+                              customer,
+                            });
 
-                          setPageMessage("");
-                        }}
-                        className="
-                          mt-4
-                          h-11
-                          w-full
-                          rounded-[14px]
-                          border
-                          border-white/10
-                          bg-white/[0.035]
-                          text-[9px]
-                          font-black
-                          uppercase
-                          tracking-[0.13em]
-                          text-white/50
-                          transition
+                            setPageMessage(
+                              "",
+                            );
+                          }}
+                          className="flex h-11 items-center justify-center gap-2 rounded-[14px] border border-white/10 bg-white/[0.035] text-[9px] font-black uppercase tracking-[0.1em] text-white/55 transition hover:border-[#b7ef00]/30 hover:text-[#b7ef00]"
+                        >
+                          <Pencil size={14} />
+                          <span>
+                            {text.editLabel}
+                          </span>
+                        </button>
 
-                          hover:border-[#b7ef00]/30
-                          hover:text-[#b7ef00]
-                        "
-                      >
-                        {text.edit}
-                      </button>
+                        <button
+                          type="button"
+                          aria-label={
+                            text.deleteLabel
+                          }
+                          onClick={() => {
+                            setDeleteError(
+                              "",
+                            );
+
+                            setDeleteTarget(
+                              customer,
+                            );
+                          }}
+                          className="flex h-11 items-center justify-center gap-2 rounded-[14px] border border-red-400/15 bg-red-400/[0.04] text-[9px] font-black uppercase tracking-[0.1em] text-red-300/70 transition hover:border-red-400/35 hover:bg-red-400/[0.08] hover:text-red-200"
+                        >
+                          <Trash2 size={14} />
+                          <span>
+                            {text.deleteLabel}
+                          </span>
+                        </button>
+                      </div>
                     </article>
                   ),
                 )}
@@ -1446,22 +1681,12 @@ export default function AdminDashboardPage() {
           {!isCustomersLoading &&
             pagination.totalPages >
               1 && (
-              <footer
-                className="
-                  flex
-                  items-center
-                  justify-between
-                  gap-4
-                  border-t
-                  border-white/[0.07]
-                  px-4
-                  py-4
-
-                  sm:px-5
-                "
-              >
+              <footer className="flex items-center justify-between gap-4 border-t border-white/[0.07] px-4 py-4 sm:px-5">
                 <button
                   type="button"
+                  aria-label={
+                    text.previous
+                  }
                   disabled={
                     pagination.page <=
                     1
@@ -1473,23 +1698,15 @@ export default function AdminDashboardPage() {
                         1,
                     });
                   }}
-                  className="
-                    h-10
-                    rounded-[13px]
-                    border
-                    border-white/10
-                    px-4
-                    text-[9px]
-                    font-black
-                    uppercase
-                    tracking-[0.11em]
-                    text-white/40
-
-                    disabled:cursor-not-allowed
-                    disabled:opacity-25
-                  "
+                  className="flex h-10 items-center gap-2 rounded-[13px] border border-white/10 px-3 text-[9px] font-black uppercase tracking-[0.11em] text-white/40 transition hover:border-white/20 hover:text-white disabled:cursor-not-allowed disabled:opacity-25"
                 >
-                  {text.previous}
+                  <ChevronLeft
+                    size={14}
+                  />
+
+                  <span className="hidden sm:inline">
+                    {text.previous}
+                  </span>
                 </button>
 
                 <p className="text-[10px] text-white/30">
@@ -1502,6 +1719,7 @@ export default function AdminDashboardPage() {
 
                 <button
                   type="button"
+                  aria-label={text.next}
                   disabled={
                     pagination.page >=
                     pagination.totalPages
@@ -1513,23 +1731,15 @@ export default function AdminDashboardPage() {
                         1,
                     });
                   }}
-                  className="
-                    h-10
-                    rounded-[13px]
-                    border
-                    border-white/10
-                    px-4
-                    text-[9px]
-                    font-black
-                    uppercase
-                    tracking-[0.11em]
-                    text-white/40
-
-                    disabled:cursor-not-allowed
-                    disabled:opacity-25
-                  "
+                  className="flex h-10 items-center gap-2 rounded-[13px] border border-white/10 px-3 text-[9px] font-black uppercase tracking-[0.11em] text-white/40 transition hover:border-white/20 hover:text-white disabled:cursor-not-allowed disabled:opacity-25"
                 >
-                  {text.next}
+                  <span className="hidden sm:inline">
+                    {text.next}
+                  </span>
+
+                  <ChevronRight
+                    size={14}
+                  />
                 </button>
               </footer>
             )}
@@ -1552,9 +1762,30 @@ export default function AdminDashboardPage() {
           onClose={() => {
             setModal(null);
           }}
-          onSaved={
-            handleSaved
+          onSaved={handleSaved}
+        />
+      )}
+
+      {deleteTarget && (
+        <DeleteConfirmationModal
+          customer={deleteTarget}
+          language={
+            currentLanguage
           }
+          isDeleting={isDeleting}
+          error={deleteError}
+          onClose={() => {
+            if (!isDeleting) {
+              setDeleteTarget(
+                null,
+              );
+
+              setDeleteError("");
+            }
+          }}
+          onConfirm={() => {
+            void handleDelete();
+          }}
         />
       )}
     </main>

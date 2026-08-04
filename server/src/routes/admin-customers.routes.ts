@@ -1593,5 +1593,171 @@ router.patch(
     }
   },
 );
+router.delete(
+  "/:customerId",
+  adminCustomerRateLimit,
+  async (
+    request,
+    response,
+    next,
+  ) => {
+    try {
+      const parsedCustomerId =
+        customerIdSchema.safeParse(
+          request.params.customerId,
+        );
 
+      if (
+        !parsedCustomerId.success
+      ) {
+        return response
+          .status(400)
+          .json({
+            success: false,
+
+            code:
+              "INVALID_CUSTOMER_ID",
+
+            message: {
+              en: "The customer ID is invalid.",
+              am: "የደንበኛው መለያ ቁጥር ትክክል አይደለም።",
+            },
+          });
+      }
+
+      const customerId =
+        parsedCustomerId.data;
+
+      const client =
+        await pool.connect();
+
+      let avatarPublicId:
+        string | null = null;
+
+      try {
+        await client.query(
+          "BEGIN",
+        );
+
+        const existingResult =
+          await client.query<ExistingCustomerRow>(
+            `
+              SELECT
+                id,
+                profile_image_public_id
+
+              FROM users
+
+              WHERE
+                id = $1
+                AND role = 'customer'
+
+              LIMIT 1
+
+              FOR UPDATE
+            `,
+            [customerId],
+          );
+
+        const existingCustomer =
+          existingResult.rows[0];
+
+        if (!existingCustomer) {
+          await client.query(
+            "ROLLBACK",
+          );
+
+          return response
+            .status(404)
+            .json({
+              success: false,
+
+              code:
+                "CUSTOMER_NOT_FOUND",
+
+              message: {
+                en: "The customer could not be found.",
+                am: "ደንበኛው አልተገኘም።",
+              },
+            });
+        }
+
+        avatarPublicId =
+          existingCustomer
+            .profile_image_public_id;
+
+        await client.query(
+          `
+            DELETE FROM
+              auth_sessions
+
+            WHERE user_id = $1
+          `,
+          [customerId],
+        );
+
+        await client.query(
+          `
+            DELETE FROM
+              customer_memberships
+
+            WHERE user_id = $1
+          `,
+          [customerId],
+        );
+
+        const deleteResult =
+          await client.query<CustomerIdRow>(
+            `
+              DELETE FROM users
+
+              WHERE
+                id = $1
+                AND role = 'customer'
+
+              RETURNING id
+            `,
+            [customerId],
+          );
+
+        if (
+          !deleteResult.rows[0]
+        ) {
+          throw new Error(
+            "Customer deletion failed.",
+          );
+        }
+
+        await client.query(
+          "COMMIT",
+        );
+      } catch (error) {
+        await client.query(
+          "ROLLBACK",
+        );
+
+        throw error;
+      } finally {
+        client.release();
+      }
+
+      await destroyAvatarSafely(
+        avatarPublicId,
+      );
+
+      return response
+        .status(200)
+        .json({
+          success: true,
+
+          message: {
+            en: "The customer account was deleted successfully.",
+            am: "የደንበኛው መለያ በተሳካ ሁኔታ ተሰርዟል።",
+          },
+        });
+    } catch (error) {
+      return next(error);
+    }
+  },
+);
 export default router;

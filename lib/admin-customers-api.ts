@@ -38,28 +38,17 @@ export type AdminCustomer = {
   username: string;
   name: string;
   email: string;
-
-  profileImageUrl:
-    | string
-    | null;
-
+  profileImageUrl: string | null;
   isActive: boolean;
   createdAt: string;
-
-  lastLoginAt:
-    | string
-    | null;
-
+  lastLoginAt: string | null;
   status: CustomerStatus;
 
   membership: {
     id: string;
     startsAt: string;
     expiresAt: string;
-
-    recordStatus:
-      MembershipRecordStatus;
-
+    recordStatus: MembershipRecordStatus;
     remainingDays: number;
   } | null;
 };
@@ -83,54 +72,40 @@ export type CreateCustomerInput = {
   username: string;
   email: string;
   password: string;
-
-  profileImagePublicId?:
-    string;
-
-  membershipPlanMonths:
-    MembershipPlanMonths;
-
-  membershipStatus:
-    MembershipRecordStatus;
+  profileImagePublicId?: string;
+  membershipPlanMonths: MembershipPlanMonths;
+  membershipStatus: MembershipRecordStatus;
 };
 
 export type UpdateCustomerInput = {
   name: string;
   username: string;
   email: string;
-
-  profileImagePublicId?:
-    string;
-
+  profileImagePublicId?: string;
   isActive: boolean;
-
   membershipPlanMonths:
     | MembershipPlanMonths
     | null;
-
-  membershipStatus:
-    MembershipRecordStatus;
-
+  membershipStatus: MembershipRecordStatus;
   newPassword?: string;
 };
 
 export type AdminCustomersResponse = {
   success: true;
-
-  customers:
-    AdminCustomer[];
-
-  summary:
-    CustomerSummary;
-
-  pagination:
-    CustomerPagination;
+  customers: AdminCustomer[];
+  summary: CustomerSummary;
+  pagination: CustomerPagination;
 };
 
 type CustomerMutationResponse = {
   success: true;
   message: LocalizedMessage;
   customer: AdminCustomer;
+};
+
+export type DeleteCustomerResponse = {
+  success: true;
+  message: LocalizedMessage;
 };
 
 type CustomerAvatarSignatureResponse = {
@@ -155,30 +130,29 @@ type ApiErrorResponse = {
   retryAfterSeconds?: number;
 };
 
-const defaultMessage:
-  LocalizedMessage = {
-    en: "Something went wrong. Please try again.",
+type AdminRequestOptions = {
+  method?:
+    | "GET"
+    | "POST"
+    | "PATCH"
+    | "DELETE";
 
-    am: "ችግር ተፈጥሯል። እባክዎ እንደገና ይሞክሩ።",
-  };
+  body?: unknown;
+};
 
-const networkMessage:
-  LocalizedMessage = {
-    en: "Unable to connect to the server.",
+const defaultMessage: LocalizedMessage = {
+  en: "Something went wrong. Please try again.",
+  am: "ችግር ተፈጥሯል። እባክዎ እንደገና ይሞክሩ።",
+};
 
-    am: "ከሰርቨሩ ጋር መገናኘት አልተቻለም።",
-  };
+const networkMessage: LocalizedMessage = {
+  en: "Unable to connect to the server.",
+  am: "ከሰርቨሩ ጋር መገናኘት አልተቻለም።",
+};
 
 async function adminRequest<T>(
   path: string,
-  options: {
-    method?:
-      | "GET"
-      | "POST"
-      | "PATCH";
-
-    body?: unknown;
-  } = {},
+  options: AdminRequestOptions = {},
 ): Promise<T> {
   let response: Response;
 
@@ -186,32 +160,23 @@ async function adminRequest<T>(
     response = await fetch(
       `/backend-api/api/admin/customers${path}`,
       {
-        method:
-          options.method ??
-          "GET",
+        method: options.method ?? "GET",
 
         headers:
-          options.body ===
-          undefined
+          options.body === undefined
             ? {
-                Accept:
-                  "application/json",
+                Accept: "application/json",
               }
             : {
-                Accept:
-                  "application/json",
-
+                Accept: "application/json",
                 "Content-Type":
                   "application/json",
               },
 
         body:
-          options.body ===
-          undefined
+          options.body === undefined
             ? undefined
-            : JSON.stringify(
-                options.body,
-              ),
+            : JSON.stringify(options.body),
 
         credentials: "include",
         cache: "no-store",
@@ -221,27 +186,19 @@ async function adminRequest<T>(
     throw new AuthApiError({
       status: 0,
       code: "NETWORK_ERROR",
-
-      localizedMessage:
-        networkMessage,
+      localizedMessage: networkMessage,
     });
   }
 
   let payload: unknown;
 
   try {
-    payload =
-      await response.json();
+    payload = await response.json();
   } catch {
     throw new AuthApiError({
-      status:
-        response.status,
-
-      code:
-        "INVALID_SERVER_RESPONSE",
-
-      localizedMessage:
-        defaultMessage,
+      status: response.status,
+      code: "INVALID_SERVER_RESPONSE",
+      localizedMessage: defaultMessage,
     });
   }
 
@@ -250,17 +207,13 @@ async function adminRequest<T>(
       payload as ApiErrorResponse;
 
     throw new AuthApiError({
-      status:
-        response.status,
-
+      status: response.status,
       code:
         error.code ??
         "CUSTOMER_REQUEST_FAILED",
-
       localizedMessage:
         error.message ??
         defaultMessage,
-
       retryAfterSeconds:
         error.retryAfterSeconds,
     });
@@ -318,6 +271,17 @@ export function updateAdminCustomer(
   );
 }
 
+export function deleteAdminCustomer(
+  customerId: string,
+) {
+  return adminRequest<DeleteCustomerResponse>(
+    `/${customerId}`,
+    {
+      method: "DELETE",
+    },
+  );
+}
+
 const allowedImageTypes =
   new Set([
     "image/jpeg",
@@ -329,19 +293,15 @@ export async function uploadCustomerAvatar(
   file: File,
 ) {
   if (
-    !allowedImageTypes.has(
-      file.type,
-    )
+    !allowedImageTypes.has(file.type)
   ) {
     throw new AuthApiError({
       status: 400,
-
       code:
         "INVALID_CUSTOMER_IMAGE_TYPE",
 
       localizedMessage: {
         en: "Choose a JPG, PNG, or WebP image.",
-
         am: "JPG፣ PNG ወይም WebP ምስል ይምረጡ።",
       },
     });
@@ -353,13 +313,11 @@ export async function uploadCustomerAvatar(
   ) {
     throw new AuthApiError({
       status: 400,
-
       code:
         "CUSTOMER_IMAGE_TOO_LARGE",
 
       localizedMessage: {
         en: "The original customer image must be 20 MB or smaller.",
-
         am: "የደንበኛው የመጀመሪያ ምስል 20 MB ወይም ከዚያ በታች መሆን አለበት።",
       },
     });
@@ -375,13 +333,11 @@ export async function uploadCustomerAvatar(
   } catch {
     throw new AuthApiError({
       status: 400,
-
       code:
         "CUSTOMER_IMAGE_COMPRESSION_FAILED",
 
       localizedMessage: {
         en: "The customer image could not be compressed. Choose another image and try again.",
-
         am: "የደንበኛውን ምስል መጨመቅ አልተቻለም። ሌላ ምስል ይምረጡና እንደገና ይሞክሩ።",
       },
     });
@@ -415,14 +371,12 @@ export async function uploadCustomerAvatar(
 
   Object.entries(
     signatureData.parameters,
-  ).forEach(
-    ([key, value]) => {
-      formData.append(
-        key,
-        String(value),
-      );
-    },
-  );
+  ).forEach(([key, value]) => {
+    formData.append(
+      key,
+      String(value),
+    );
+  });
 
   let response: Response;
 
@@ -437,35 +391,28 @@ export async function uploadCustomerAvatar(
   } catch {
     throw new AuthApiError({
       status: 0,
-
       code:
         "CUSTOMER_IMAGE_NETWORK_ERROR",
-
-      localizedMessage:
-        networkMessage,
+      localizedMessage: networkMessage,
     });
   }
 
   let payload: unknown;
 
   try {
-    payload =
-      await response.json();
+    payload = await response.json();
   } catch {
     payload = null;
   }
 
   if (!response.ok) {
     throw new AuthApiError({
-      status:
-        response.status,
-
+      status: response.status,
       code:
         "CUSTOMER_IMAGE_UPLOAD_FAILED",
 
       localizedMessage: {
         en: "The customer image upload failed. Check the image and try again.",
-
         am: "የደንበኛው ምስል መጫን አልተሳካም። ምስሉን አረጋግጠው ይሞክሩ።",
       },
     });
@@ -482,13 +429,11 @@ export async function uploadCustomerAvatar(
   ) {
     throw new AuthApiError({
       status: 400,
-
       code:
         "UNEXPECTED_CUSTOMER_IMAGE",
 
       localizedMessage: {
         en: "The uploaded customer image could not be verified.",
-
         am: "የተጫነው የደንበኛ ምስል ሊረጋገጥ አልቻለም።",
       },
     });
